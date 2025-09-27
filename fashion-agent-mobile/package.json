@@ -1,0 +1,35 @@
+{
+  "name": "fashion-agent-mobile",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "^2.2.0",
+    "axios": "^1.12.2",
+    "expo": "~54.0.10",
+    "expo-camera": "^17.0.8",
+    "expo-crypto": "^15.0.7",
+    "expo-dev-client": "~6.0.12",
+    "expo-image-picker": "^17.0.8",
+    "expo-media-library": "^18.2.0",
+    "expo-router": "^6.0.8",
+    "expo-secure-store": "^15.0.7",
+    "expo-status-bar": "~3.0.8",
+    "lucide-react-native": "^0.544.0",
+    "react": "19.1.0",
+    "react-hook-form": "^7.63.0",
+    "react-native": "0.81.4",
+    "react-native-svg": "15.12.1",
+    "react-native-toast-message": "^2.3.3"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.0",
+    "typescript": "~5.9.2"
+  },
+  "private": true
+}
