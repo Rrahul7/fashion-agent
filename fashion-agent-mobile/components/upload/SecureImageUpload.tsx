@@ -29,9 +29,17 @@ interface OutfitAnalysis {
   colorHarmonyScore: number;
   occasionSuitability: string;
   occasionScore: number;
+  proportionBalance: string;
+  proportionScore: number;
+  fabricSynergy: string;
+  fabricScore: number;
+  stylingSophistication: string;
+  sophisticationScore: number;
   overallScore: number;
   highlights: string[];
   improvementSuggestions: string[];
+  expertInsights?: string[];
+  technicalFlaws?: string[];
 }
 
 interface GuestUsage {
@@ -251,12 +259,24 @@ export function SecureImageUpload({
         
         console.log('✅ Analysis completed successfully');
         
-        Toast.show({
-          type: 'success',
-          text1: 'Analysis Complete!',
-          text2: `Your outfit scored ${analysisResult.outfitAnalysis.overallScore}/100`,
-          visibilityTime: 3000,
-        });
+        // Check for "no outfit" case
+        if (analysisResult.outfitAnalysis.styleCategory === 'no outfit' || analysisResult.outfitAnalysis.overallScore === 0) {
+          Toast.show({
+            type: 'error',
+            text1: 'No Outfit Detected',
+            text2: 'Please upload an image with clothing to analyze',
+            visibilityTime: 4000,
+          });
+        } else {
+          // Convert to 10-point scale for display
+          const convertedScore = Math.round(analysisResult.outfitAnalysis.overallScore / 10);
+          Toast.show({
+            type: 'success',
+            text1: 'Analysis Complete!',
+            text2: `Your outfit scored ${convertedScore}/10`,
+            visibilityTime: 3000,
+          });
+        }
 
         // Call completion callback
         onAnalysisComplete?.(analysisResult);

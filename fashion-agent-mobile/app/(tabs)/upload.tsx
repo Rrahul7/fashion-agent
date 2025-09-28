@@ -14,11 +14,24 @@ interface AnalysisResult {
   reviewId: string;
   outfitAnalysis: {
     styleCategory: string;
-    fit: number;
-    colorHarmony: number;
-    occasionSuitability: number;
+    styleCategoryScore: number;
+    fit: string;
+    fitScore: number;
+    colorHarmony: string;
+    colorHarmonyScore: number;
+    occasionSuitability: string;
+    occasionScore: number;
+    proportionBalance: string;
+    proportionScore: number;
+    fabricSynergy: string;
+    fabricScore: number;
+    stylingSophistication: string;
+    sophisticationScore: number;
+    overallScore: number;
     highlights: string[];
     improvementSuggestions: string[];
+    expertInsights?: string[];
+    technicalFlaws?: string[];
   };
 }
 
@@ -27,19 +40,34 @@ export default function UploadScreen() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const router = useRouter();
 
+  // Convert 100-point scale to 10-point scale
+  const convertScore = (score: number): number => {
+    return Math.round(score / 10);
+  };
+
   const handleAnalysisComplete = (result: AnalysisResult) => {
     setCurrentAnalysis(result);
     
-    // Calculate average score
-    const avgScore = Math.round((result.outfitAnalysis.fit + result.outfitAnalysis.colorHarmony + result.outfitAnalysis.occasionSuitability) / 3);
-    
-    // Show success feedback
-    Toast.show({
-      type: 'success',
-      text1: 'Analysis Complete! 🎉',
-      text2: `Your outfit scored ${avgScore}/10`,
-      visibilityTime: 3000,
-    });
+    // Check for "no outfit" case
+    if (result.outfitAnalysis.styleCategory === 'no outfit' || result.outfitAnalysis.overallScore === 0) {
+      Toast.show({
+        type: 'error',
+        text1: 'No Outfit Detected',
+        text2: 'Please upload an image with clothing to analyze',
+        visibilityTime: 4000,
+      });
+    } else {
+      // Convert overall score to 10-point scale
+      const overallScore = convertScore(result.outfitAnalysis.overallScore);
+      
+      // Show success feedback
+      Toast.show({
+        type: 'success',
+        text1: 'Analysis Complete! 🎉',
+        text2: `Your outfit scored ${overallScore}/10`,
+        visibilityTime: 3000,
+      });
+    }
 
     // Optional: Navigate to history or show result
     console.log('✅ Analysis completed:', result);
@@ -90,22 +118,22 @@ export default function UploadScreen() {
           {/* Score Display */}
           <View style={styles.scoreContainer}>
             {(() => {
-              const avgScore = Math.round((currentAnalysis.outfitAnalysis.fit + currentAnalysis.outfitAnalysis.colorHarmony + currentAnalysis.outfitAnalysis.occasionSuitability) / 3);
+              const overallScore = convertScore(currentAnalysis.outfitAnalysis.overallScore);
               return (
                 <>
-                  <View style={[styles.scoreCircle, { backgroundColor: getScoreColor(avgScore) }]}>
-                    <Text style={styles.scoreText}>{avgScore}</Text>
+                  <View style={[styles.scoreCircle, { backgroundColor: getScoreColor(overallScore) }]}>
+                    <Text style={styles.scoreText}>{overallScore}</Text>
                     <Text style={styles.scoreOutOf}>/10</Text>
                   </View>
                   
                   <View style={styles.scoreInfo}>
                     <Text style={styles.scoreEmoji}>
-                      {getScoreEmoji(avgScore)}
+                      {getScoreEmoji(overallScore)}
                     </Text>
                     <Text style={styles.scoreLabel}>
-                      {avgScore >= 8 ? 'Excellent Style!' :
-                       avgScore >= 6 ? 'Good Look!' :
-                       avgScore >= 4 ? 'Room for Improvement' :
+                      {overallScore >= 8 ? 'Excellent Style!' :
+                       overallScore >= 6 ? 'Good Look!' :
+                       overallScore >= 4 ? 'Room for Improvement' :
                        'Let\'s Elevate Your Style'}
                     </Text>
                   </View>
@@ -119,27 +147,59 @@ export default function UploadScreen() {
             <Text style={styles.scoreBreakdownTitle}>Score Breakdown</Text>
             
             <View style={styles.scoreBreakdownItem}>
-              <Text style={styles.scoreBreakdownLabel}>Fit</Text>
+              <Text style={styles.scoreBreakdownLabel}>Style Category</Text>
               <View style={styles.scoreBreakdownBar}>
-                <View style={[styles.scoreBreakdownFill, { width: `${currentAnalysis.outfitAnalysis.fit * 10}%`, backgroundColor: getScoreColor(currentAnalysis.outfitAnalysis.fit) }]} />
+                <View style={[styles.scoreBreakdownFill, { width: `${convertScore(currentAnalysis.outfitAnalysis.styleCategoryScore) * 10}%`, backgroundColor: getScoreColor(convertScore(currentAnalysis.outfitAnalysis.styleCategoryScore)) }]} />
               </View>
-              <Text style={styles.scoreBreakdownValue}>{currentAnalysis.outfitAnalysis.fit}/10</Text>
+              <Text style={styles.scoreBreakdownValue}>{convertScore(currentAnalysis.outfitAnalysis.styleCategoryScore)}/10</Text>
             </View>
             
             <View style={styles.scoreBreakdownItem}>
-              <Text style={styles.scoreBreakdownLabel}>Color Harmony</Text>
+              <Text style={styles.scoreBreakdownLabel}>Technical Fit</Text>
               <View style={styles.scoreBreakdownBar}>
-                <View style={[styles.scoreBreakdownFill, { width: `${currentAnalysis.outfitAnalysis.colorHarmony * 10}%`, backgroundColor: getScoreColor(currentAnalysis.outfitAnalysis.colorHarmony) }]} />
+                <View style={[styles.scoreBreakdownFill, { width: `${convertScore(currentAnalysis.outfitAnalysis.fitScore) * 10}%`, backgroundColor: getScoreColor(convertScore(currentAnalysis.outfitAnalysis.fitScore)) }]} />
               </View>
-              <Text style={styles.scoreBreakdownValue}>{currentAnalysis.outfitAnalysis.colorHarmony}/10</Text>
+              <Text style={styles.scoreBreakdownValue}>{convertScore(currentAnalysis.outfitAnalysis.fitScore)}/10</Text>
             </View>
             
             <View style={styles.scoreBreakdownItem}>
-              <Text style={styles.scoreBreakdownLabel}>Occasion Suitability</Text>
+              <Text style={styles.scoreBreakdownLabel}>Color Theory</Text>
               <View style={styles.scoreBreakdownBar}>
-                <View style={[styles.scoreBreakdownFill, { width: `${currentAnalysis.outfitAnalysis.occasionSuitability * 10}%`, backgroundColor: getScoreColor(currentAnalysis.outfitAnalysis.occasionSuitability) }]} />
+                <View style={[styles.scoreBreakdownFill, { width: `${convertScore(currentAnalysis.outfitAnalysis.colorHarmonyScore) * 10}%`, backgroundColor: getScoreColor(convertScore(currentAnalysis.outfitAnalysis.colorHarmonyScore)) }]} />
               </View>
-              <Text style={styles.scoreBreakdownValue}>{currentAnalysis.outfitAnalysis.occasionSuitability}/10</Text>
+              <Text style={styles.scoreBreakdownValue}>{convertScore(currentAnalysis.outfitAnalysis.colorHarmonyScore)}/10</Text>
+            </View>
+            
+            <View style={styles.scoreBreakdownItem}>
+              <Text style={styles.scoreBreakdownLabel}>Occasion</Text>
+              <View style={styles.scoreBreakdownBar}>
+                <View style={[styles.scoreBreakdownFill, { width: `${convertScore(currentAnalysis.outfitAnalysis.occasionScore) * 10}%`, backgroundColor: getScoreColor(convertScore(currentAnalysis.outfitAnalysis.occasionScore)) }]} />
+              </View>
+              <Text style={styles.scoreBreakdownValue}>{convertScore(currentAnalysis.outfitAnalysis.occasionScore)}/10</Text>
+            </View>
+            
+            <View style={styles.scoreBreakdownItem}>
+              <Text style={styles.scoreBreakdownLabel}>Proportion</Text>
+              <View style={styles.scoreBreakdownBar}>
+                <View style={[styles.scoreBreakdownFill, { width: `${convertScore(currentAnalysis.outfitAnalysis.proportionScore) * 10}%`, backgroundColor: getScoreColor(convertScore(currentAnalysis.outfitAnalysis.proportionScore)) }]} />
+              </View>
+              <Text style={styles.scoreBreakdownValue}>{convertScore(currentAnalysis.outfitAnalysis.proportionScore)}/10</Text>
+            </View>
+            
+            <View style={styles.scoreBreakdownItem}>
+              <Text style={styles.scoreBreakdownLabel}>Fabric Synergy</Text>
+              <View style={styles.scoreBreakdownBar}>
+                <View style={[styles.scoreBreakdownFill, { width: `${convertScore(currentAnalysis.outfitAnalysis.fabricScore) * 10}%`, backgroundColor: getScoreColor(convertScore(currentAnalysis.outfitAnalysis.fabricScore)) }]} />
+              </View>
+              <Text style={styles.scoreBreakdownValue}>{convertScore(currentAnalysis.outfitAnalysis.fabricScore)}/10</Text>
+            </View>
+            
+            <View style={styles.scoreBreakdownItem}>
+              <Text style={styles.scoreBreakdownLabel}>Styling Sophistication</Text>
+              <View style={styles.scoreBreakdownBar}>
+                <View style={[styles.scoreBreakdownFill, { width: `${convertScore(currentAnalysis.outfitAnalysis.sophisticationScore) * 10}%`, backgroundColor: getScoreColor(convertScore(currentAnalysis.outfitAnalysis.sophisticationScore)) }]} />
+              </View>
+              <Text style={styles.scoreBreakdownValue}>{convertScore(currentAnalysis.outfitAnalysis.sophisticationScore)}/10</Text>
             </View>
           </View>
 
