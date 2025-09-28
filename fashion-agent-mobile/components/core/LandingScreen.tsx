@@ -81,7 +81,13 @@ export function LandingScreen({ onAnimationComplete }: LandingScreenProps) {
               ]}
             >
               <View style={styles.logoCircle}>
-                <DripLogo size={56} color="#F5D03A" backgroundColor="transparent" />
+                <DripLogo 
+                  size={56} 
+                  backgroundColor="transparent"
+                  primaryColor="#F5D03A"
+                  secondaryColor="#FBBF24"
+                  accentColor="#FFFFFF"
+                />
               </View>
               
               {/* App Name */}

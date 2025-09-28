@@ -345,7 +345,13 @@ export function GuestOutfitReview() {
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.sparkleContainer}>
-              <DripLogo size={40} color="#F5D03A" backgroundColor="transparent" />
+              <DripLogo 
+                size={40} 
+                backgroundColor="transparent"
+                primaryColor="#1F2937"
+                secondaryColor="#F5D03A"
+                accentColor="#E6B800"
+              />
             </View>
             <Text style={styles.headerMainTitle}>Drip AI Expert</Text>
             <Text style={styles.headerMainSubtitle}>Get instant outfit analysis from your AI stylist</Text>
