@@ -313,7 +313,7 @@ export function SecureImageUpload({
       <View style={styles.container}>
         {/* Upload Area */}
         <View style={styles.uploadArea}>
-          <Camera size={48} color="#9CA3AF" />
+          <Camera size={48} color="#1F2937" />
           <Text style={styles.uploadTitle}>Upload Your Outfit</Text>
           <Text style={styles.uploadSubtext}>Drag & drop or click to browse</Text>
         </View>
@@ -414,16 +414,16 @@ const styles = StyleSheet.create({
   uploadArea: {
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#D1D5DB',
+    borderColor: '#1F2937',
     borderRadius: 16,
     padding: 48,
     alignItems: 'center',
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#F5F1E8',
   },
   uploadTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#111827',
+    color: '#1F2937',
     marginTop: 16,
     marginBottom: 8,
   },
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#1F2937',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -446,6 +446,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     borderRadius: 12,
     gap: 8,
+    shadowColor: '#1F2937',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
   },
   buttonText: {
     color: 'white',

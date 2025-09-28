@@ -1,24 +1,24 @@
 {
   "expo": {
-    "name": "Fashion Agent",
-    "slug": "fashion-agent-mobile",
+    "name": "Drip",
+    "slug": "drip-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "fashionagent",
+    "scheme": "drip",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1F2937"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.fashionagent.mobile",
+      "bundleIdentifier": "com.drip.mobile",
       "infoPlist": {
         "NSCameraUsageDescription": "This app needs access to camera to analyze your outfits and style",
         "NSPhotoLibraryUsageDescription": "This app needs access to photo library to analyze your fashion choices",
@@ -28,9 +28,9 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#1F2937"
       },
-      "package": "com.fashionagent.mobile",
+      "package": "com.drip.mobile",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
@@ -55,7 +55,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Fashion Agent to access your camera to capture outfit photos."
+          "cameraPermission": "Allow Drip to access your camera to capture outfit photos."
         }
       ]
     ],

@@ -6,7 +6,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import SecureImageUpload from '../../components/upload/SecureImageUpload';
+import { SecureImageUpload } from '../../components/upload/SecureImageUpload';
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 
@@ -228,23 +228,23 @@ export default function UploadScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F5F1E8',
   },
   header: {
     padding: 20,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    borderBottomColor: '#E5E7EB',
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#333',
+    color: '#1F2937',
     marginBottom: 4,
   },
   headerSubtext: {
     fontSize: 16,
-    color: '#666',
+    color: '#6B7280',
     lineHeight: 22,
   },
   uploadContainer: {
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
   resultTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#333',
+    color: '#1F2937',
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   scoreLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#1F2937',
   },
   feedbackContainer: {
     marginBottom: 24,
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   categoryTag: {
-    backgroundColor: '#667eea',
+    backgroundColor: '#1F2937',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,

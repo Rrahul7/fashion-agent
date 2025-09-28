@@ -9,9 +9,11 @@ import {
   ActivityIndicator,
   Alert,
   SafeAreaView,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Sparkles, Star, Target, Palette, Shirt, TrendingUp, RefreshCw, MessageCircle } from 'lucide-react-native';
+import { DripLogo } from '../ui/DripLogo';
 import Toast from 'react-native-toast-message';
 import { SecureImageUpload } from '../upload/SecureImageUpload';
 import { FeedbackModal } from './FeedbackModal';
@@ -116,17 +118,17 @@ export function GuestOutfitReview() {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return ['#10B981', '#047857']; // Green gradient
-    if (score >= 70) return ['#3B82F6', '#1D4ED8']; // Blue gradient
-    if (score >= 60) return ['#F59E0B', '#D97706']; // Yellow gradient
+    if (score >= 8) return ['#10B981', '#047857']; // Green gradient
+    if (score >= 7) return ['#3B82F6', '#1D4ED8']; // Blue gradient
+    if (score >= 6) return ['#F59E0B', '#D97706']; // Yellow gradient
     return ['#EF4444', '#DC2626']; // Red gradient
   };
 
   const getScoreGrade = (score: number) => {
-    if (score >= 90) return 'A+';
-    if (score >= 80) return 'A';
-    if (score >= 70) return 'B';
-    if (score >= 60) return 'C';
+    if (score >= 9) return 'A+';
+    if (score >= 8) return 'A';
+    if (score >= 7) return 'B';
+    if (score >= 6) return 'C';
     return 'D';
   };
 
@@ -136,7 +138,7 @@ export function GuestOutfitReview() {
     return (
       <SafeAreaView style={styles.container}>
         <LinearGradient
-          colors={['#F9FAFB', '#E5E7EB']}
+          colors={['#F5F1E8', '#EDE7DC']}
           style={styles.gradientBackground}
         >
           <ScrollView 
@@ -169,62 +171,58 @@ export function GuestOutfitReview() {
                 <Text style={styles.scoreGrade}>{getScoreGrade(outfitAnalysis.overallScore)}</Text>
               </View>
               <Text style={styles.overallScoreTitle}>Overall Score</Text>
-              <Text style={styles.overallScoreValue}>{outfitAnalysis.overallScore}/100</Text>
+              <Text style={styles.overallScoreValue}>{outfitAnalysis.overallScore}/10</Text>
               <Text style={styles.overallScoreSubtext}>Your outfit analysis breakdown</Text>
             </View>
 
             {/* Fashion Parameter Tiles */}
             <View style={styles.tilesContainer}>
               <View style={styles.tilesRow}>
-                <LinearGradient
-                  colors={getScoreColor(outfitAnalysis.styleCategoryScore)}
-                  style={styles.tile}
-                >
-                  <View style={styles.tileHeader}>
+                <View style={styles.tile}>
+                  <View style={styles.tileIconContainer}>
                     <Shirt size={24} color="white" />
-                    <Text style={styles.tileScore}>{outfitAnalysis.styleCategoryScore}</Text>
                   </View>
                   <Text style={styles.tileLabel}>Style</Text>
                   <Text style={styles.tileValue}>{outfitAnalysis.styleCategory}</Text>
-                </LinearGradient>
+                  <View style={styles.tileScoreContainer}>
+                    <Text style={styles.tileScore}>{outfitAnalysis.styleCategoryScore}</Text>
+                  </View>
+                </View>
 
-                <LinearGradient
-                  colors={getScoreColor(outfitAnalysis.fitScore)}
-                  style={styles.tile}
-                >
-                  <View style={styles.tileHeader}>
+                <View style={styles.tile}>
+                  <View style={styles.tileIconContainer}>
                     <Target size={24} color="white" />
-                    <Text style={styles.tileScore}>{outfitAnalysis.fitScore}</Text>
                   </View>
                   <Text style={styles.tileLabel}>Fit</Text>
                   <Text style={styles.tileValue}>{outfitAnalysis.fit}</Text>
-                </LinearGradient>
+                  <View style={styles.tileScoreContainer}>
+                    <Text style={styles.tileScore}>{outfitAnalysis.fitScore}</Text>
+                  </View>
+                </View>
               </View>
 
               <View style={styles.tilesRow}>
-                <LinearGradient
-                  colors={getScoreColor(outfitAnalysis.colorHarmonyScore)}
-                  style={styles.tile}
-                >
-                  <View style={styles.tileHeader}>
+                <View style={styles.tile}>
+                  <View style={styles.tileIconContainer}>
                     <Palette size={24} color="white" />
-                    <Text style={styles.tileScore}>{outfitAnalysis.colorHarmonyScore}</Text>
                   </View>
                   <Text style={styles.tileLabel}>Colors</Text>
                   <Text style={styles.tileValue}>{outfitAnalysis.colorHarmony}</Text>
-                </LinearGradient>
+                  <View style={styles.tileScoreContainer}>
+                    <Text style={styles.tileScore}>{outfitAnalysis.colorHarmonyScore}</Text>
+                  </View>
+                </View>
 
-                <LinearGradient
-                  colors={getScoreColor(outfitAnalysis.occasionScore)}
-                  style={styles.tile}
-                >
-                  <View style={styles.tileHeader}>
+                <View style={styles.tile}>
+                  <View style={styles.tileIconContainer}>
                     <Star size={24} color="white" />
-                    <Text style={styles.tileScore}>{outfitAnalysis.occasionScore}</Text>
                   </View>
                   <Text style={styles.tileLabel}>Occasion</Text>
                   <Text style={styles.tileValue}>{outfitAnalysis.occasionSuitability}</Text>
-                </LinearGradient>
+                  <View style={styles.tileScoreContainer}>
+                    <Text style={styles.tileScore}>{outfitAnalysis.occasionScore}</Text>
+                  </View>
+                </View>
               </View>
             </View>
 
@@ -256,7 +254,7 @@ export function GuestOutfitReview() {
                 <View style={styles.cardContent}>
                   {outfitAnalysis.improvementSuggestions.map((suggestion, index) => (
                     <View key={index} style={styles.listItem}>
-                      <View style={[styles.bullet, { backgroundColor: '#4F46E5' }]} />
+                      <View style={[styles.bullet, { backgroundColor: '#1F2937' }]} />
                       <Text style={styles.listText}>{suggestion}</Text>
                     </View>
                   ))}
@@ -336,7 +334,7 @@ export function GuestOutfitReview() {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={['#F9FAFB', '#E5E7EB']}
+        colors={['#F5F1E8', '#EDE7DC']}
         style={styles.gradientBackground}
       >
         <ScrollView 
@@ -347,10 +345,10 @@ export function GuestOutfitReview() {
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.sparkleContainer}>
-              <Sparkles size={40} color="#4F46E5" />
+              <DripLogo size={40} color="#F5D03A" backgroundColor="transparent" />
             </View>
-            <Text style={styles.headerMainTitle}>AI Fashion Expert</Text>
-            <Text style={styles.headerMainSubtitle}>Get instant outfit analysis from our AI stylist</Text>
+            <Text style={styles.headerMainTitle}>Drip AI Expert</Text>
+            <Text style={styles.headerMainSubtitle}>Get instant outfit analysis from your AI stylist</Text>
             
             {/* Guest Usage Indicator */}
             <View style={styles.usageIndicatorMain}>
@@ -361,7 +359,7 @@ export function GuestOutfitReview() {
                     key={i}
                     style={[
                       styles.usageDot,
-                      { backgroundColor: i < guestUsage.used ? '#4F46E5' : '#D1D5DB' }
+                      { backgroundColor: i < guestUsage.used ? '#F5D03A' : '#D1D5DB' }
                     ]}
                   />
                 ))}
@@ -425,13 +423,13 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'white',
+    backgroundColor: '#1F2937',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 12,
     elevation: 8,
   },
@@ -454,12 +452,14 @@ const styles = StyleSheet.create({
     color: '#111827',
     marginBottom: 8,
     textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   headerMainSubtitle: {
     fontSize: 18,
     color: '#6B7280',
     textAlign: 'center',
     marginBottom: 24,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   usageIndicator: {
     flexDirection: 'row',
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   usageCount: {
-    color: '#4F46E5',
+    color: '#1F2937',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 2,
   },
   usageMainCount: {
-    color: '#4F46E5',
+    color: '#1F2937',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -536,10 +536,15 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#1F2937',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+    shadowColor: '#1F2937',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   scoreGrade: {
     fontSize: 28,
@@ -551,12 +556,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#111827',
     marginBottom: 8,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   overallScoreValue: {
     fontSize: 36,
     fontWeight: '700',
     color: '#111827',
     marginBottom: 8,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   overallScoreSubtext: {
     fontSize: 14,
@@ -574,34 +581,54 @@ const styles = StyleSheet.create({
   },
   tile: {
     flex: 1,
-    borderRadius: 16,
+    backgroundColor: '#2D2D2D',
+    borderRadius: 20,
     padding: 20,
-    alignItems: 'center',
-  },
-  tileHeader: {
-    flexDirection: 'row',
+    marginHorizontal: 6,
+    minHeight: 140,
     justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  tileScore: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: 'white',
+  tileIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#404040',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   tileLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'white',
-    marginBottom: 4,
+    color: '#FFFFFF',
+    marginBottom: 8,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   tileValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: 'white',
+    fontSize: 12,
+    fontWeight: '400',
+    color: '#B0B0B0',
     textTransform: 'capitalize',
-    textAlign: 'center',
+    marginBottom: 8,
+    lineHeight: 16,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  tileScoreContainer: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#404040',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  tileScore: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   card: {
     backgroundColor: 'white',
@@ -661,13 +688,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   feedbackButton: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#1F2937',
     paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingVertical: 12,
+    borderRadius: 12,
+    shadowColor: '#1F2937',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   feedbackButtonText: {
-    color: '#4F46E5',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -706,7 +738,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   primaryButton: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#1F2937',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -714,6 +746,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 16,
     gap: 8,
+    shadowColor: '#1F2937',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   primaryButtonText: {
     color: 'white',
@@ -742,10 +779,15 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   upgradeButton: {
-    backgroundColor: '#EA580C',
+    backgroundColor: '#1F2937',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,
+    shadowColor: '#1F2937',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
   },
   upgradeButtonText: {
     color: 'white',
@@ -782,7 +824,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#1F2937',
   },
   tipText: {
     flex: 1,

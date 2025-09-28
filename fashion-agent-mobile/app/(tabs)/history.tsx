@@ -8,8 +8,10 @@ import {
   RefreshControl,
   Image,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { fashionAPI } from '../../services/api';
+import { useAuth } from '../../hooks/useAuth';
 import Toast from 'react-native-toast-message';
 
 const { width } = Dimensions.get('window');
@@ -29,30 +31,45 @@ interface AnalysisHistory {
 }
 
 export default function HistoryScreen() {
+  const { user, isAuthenticated } = useAuth();
   const [analysisHistory, setAnalysisHistory] = useState<AnalysisHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  
+  const maxReviews = isAuthenticated ? 5 : 3;
 
   useEffect(() => {
     loadAnalysisHistory();
-  }, []);
+  }, [isAuthenticated]);
 
   const loadAnalysisHistory = async () => {
     try {
       setLoading(true);
       
-      const response = await fashionAPI.getAnalysisHistory();
-      setAnalysisHistory(response.data);
-      
-      console.log('✅ Analysis history loaded successfully');
+      // Only load history if user is authenticated
+      if (isAuthenticated) {
+        const response = await fashionAPI.getAnalysisHistory();
+        setAnalysisHistory(response.data);
+        console.log('✅ Analysis history loaded successfully');
+      } else {
+        // For guests, show empty history
+        setAnalysisHistory([]);
+        console.log('🧑‍🤝‍🧑 Guest user - showing empty history');
+      }
     } catch (error: any) {
       console.error('❌ Failed to load analysis history:', error);
       
-      Toast.show({
-        type: 'error',
-        text1: 'Failed to Load History',
-        text2: 'Please check your connection and try again',
-      });
+      // Don't show error toast for 401 errors (authentication issues)
+      if (error.response?.status !== 401) {
+        Toast.show({
+          type: 'error',
+          text1: 'Failed to Load History',
+          text2: 'Please check your connection and try again',
+        });
+      }
+      
+      // Set empty history on error
+      setAnalysisHistory([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -77,6 +94,7 @@ export default function HistoryScreen() {
 
   const getScoreColor = (score: number) => {
     if (score >= 8) return '#10B981'; // Green
+    if (score >= 7) return '#3B82F6'; // Blue
     if (score >= 6) return '#F59E0B'; // Yellow
     return '#EF4444'; // Red
   };
@@ -96,8 +114,18 @@ export default function HistoryScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Style History</Text>
         <Text style={styles.headerSubtext}>
-          Your complete fashion analysis journey
+          {isAuthenticated 
+            ? `Your fashion journey - showing last ${maxReviews} reviews`
+            : `Guest access - showing last ${maxReviews} reviews`
+          }
         </Text>
+        {!isAuthenticated && (
+          <View style={styles.upgradeHint}>
+            <Text style={styles.upgradeHintText}>
+              Sign up to see up to 5 reviews and unlock premium features!
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Analysis History */}
@@ -114,86 +142,47 @@ export default function HistoryScreen() {
           </Text>
         </View>
       ) : (
-        <View style={styles.historyContainer}>
-          {analysisHistory.map((analysis) => {
+        <View style={styles.tilesContainer}>
+          {analysisHistory.slice(0, maxReviews).map((analysis, index) => {
             const avgScore = calculateAverageScore(analysis);
             return (
-              <View key={analysis.id} style={styles.historyCard}>
-                {/* Image and Score */}
-                <View style={styles.cardHeader}>
-                  <Image source={{ uri: analysis.imageUrl }} style={styles.outfitImage} />
-                  
-                  <View style={styles.cardInfo}>
-                    <View style={styles.scoreContainer}>
-                      <View style={[styles.scoreCircle, { backgroundColor: getScoreColor(avgScore) }]}>
-                        <Text style={styles.scoreText}>{avgScore}</Text>
-                      </View>
-                      <View style={styles.scoreDetails}>
-                        <Text style={styles.scoreLabel}>Overall Score</Text>
-                        <Text style={styles.categoryText}>{analysis.styleCategory}</Text>
-                      </View>
-                    </View>
-                    
-                    <Text style={styles.dateText}>{formatDate(analysis.createdAt)}</Text>
+              <View key={analysis.id} style={styles.historyTile}>
+                {/* Tile Header with Index */}
+                <View style={styles.tileHeader}>
+                  <Text style={styles.tileNumber}>{String(index + 1).padStart(2, '0')}</Text>
+                  <View style={styles.tileScoreContainer}>
+                    <Text style={styles.tileScore}>{avgScore}</Text>
                   </View>
                 </View>
 
-                {/* Score Breakdown */}
-                <View style={styles.breakdownContainer}>
-                  <View style={styles.breakdownItem}>
-                    <Text style={styles.breakdownLabel}>Fit</Text>
-                    <View style={styles.breakdownBar}>
-                      <View style={[styles.breakdownFill, { 
-                        width: `${analysis.fit * 10}%`, 
-                        backgroundColor: getScoreColor(analysis.fit) 
-                      }]} />
+                {/* Tile Content */}
+                <View style={styles.tileContent}>
+                  <Text style={styles.tileCategory}>{analysis.styleCategory || 'Style Review'}</Text>
+                  <Text style={styles.tileDate}>{formatDate(analysis.createdAt)}</Text>
+                  
+                  {/* Mini Score Bars */}
+                  <View style={styles.miniScoreContainer}>
+                    <View style={styles.miniScoreItem}>
+                      <Text style={styles.miniScoreLabel}>Fit</Text>
+                      <Text style={styles.miniScoreValue}>{analysis.fit}/10</Text>
                     </View>
-                    <Text style={styles.breakdownScore}>{analysis.fit}</Text>
+                    <View style={styles.miniScoreItem}>
+                      <Text style={styles.miniScoreLabel}>Color</Text>
+                      <Text style={styles.miniScoreValue}>{analysis.colorHarmony}/10</Text>
+                    </View>
+                    <View style={styles.miniScoreItem}>
+                      <Text style={styles.miniScoreLabel}>Occasion</Text>
+                      <Text style={styles.miniScoreValue}>{analysis.occasionSuitability}/10</Text>
+                    </View>
                   </View>
                   
-                  <View style={styles.breakdownItem}>
-                    <Text style={styles.breakdownLabel}>Color</Text>
-                    <View style={styles.breakdownBar}>
-                      <View style={[styles.breakdownFill, { 
-                        width: `${analysis.colorHarmony * 10}%`, 
-                        backgroundColor: getScoreColor(analysis.colorHarmony) 
-                      }]} />
-                    </View>
-                    <Text style={styles.breakdownScore}>{analysis.colorHarmony}</Text>
-                  </View>
-                  
-                  <View style={styles.breakdownItem}>
-                    <Text style={styles.breakdownLabel}>Occasion</Text>
-                    <View style={styles.breakdownBar}>
-                      <View style={[styles.breakdownFill, { 
-                        width: `${analysis.occasionSuitability * 10}%`, 
-                        backgroundColor: getScoreColor(analysis.occasionSuitability) 
-                      }]} />
-                    </View>
-                    <Text style={styles.breakdownScore}>{analysis.occasionSuitability}</Text>
-                  </View>
-                </View>
-
-                {/* Highlights */}
-                {analysis.highlights && analysis.highlights.length > 0 && (
-                  <View style={styles.highlightsContainer}>
-                    <Text style={styles.sectionTitle}>✨ Highlights</Text>
-                    {analysis.highlights.slice(0, 2).map((highlight, index) => (
-                      <Text key={index} style={styles.highlightText}>• {highlight}</Text>
-                    ))}
-                  </View>
-                )}
-
-                {/* Suggestions Preview */}
-                {analysis.improvementSuggestions && analysis.improvementSuggestions.length > 0 && (
-                  <View style={styles.suggestionsContainer}>
-                    <Text style={styles.sectionTitle}>💡 Suggestions</Text>
-                    <Text style={styles.suggestionText}>
-                      {analysis.improvementSuggestions[0]}
-                      {analysis.improvementSuggestions.length > 1 && ` (+${analysis.improvementSuggestions.length - 1} more)`}
+                  {/* Best Highlight */}
+                  {analysis.highlights && analysis.highlights.length > 0 && (
+                    <Text style={styles.tileHighlight} numberOfLines={2}>
+                      ✨ {analysis.highlights[0]}
                     </Text>
-                  </View>
-                )}
+                  )}
+                </View>
               </View>
             );
           })}
@@ -206,31 +195,46 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F5F1E8',
   },
   header: {
     padding: 20,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    borderBottomColor: '#E5E7EB',
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#333',
+    color: '#1F2937',
     marginBottom: 4,
   },
   headerSubtext: {
     fontSize: 16,
-    color: '#666',
+    color: '#6B7280',
     lineHeight: 22,
+    marginBottom: 8,
+  },
+  upgradeHint: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+  },
+  upgradeHintText: {
+    fontSize: 14,
+    color: '#92400E',
+    textAlign: 'center',
+    fontWeight: '500',
   },
   loadingContainer: {
     padding: 40,
     alignItems: 'center',
   },
   loadingText: {
-    color: '#666',
+    color: '#6B7280',
     fontSize: 16,
   },
   emptyContainer: {
@@ -246,133 +250,97 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: '#1F2937',
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B7280',
     textAlign: 'center',
     lineHeight: 20,
   },
-  historyContainer: {
+  tilesContainer: {
     padding: 20,
     paddingTop: 12,
   },
-  historyCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
+  historyTile: {
+    backgroundColor: '#2D2D2D',
+    borderRadius: 20,
+    padding: 20,
     marginBottom: 16,
+    minHeight: 160,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  cardHeader: {
+  tileHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
   },
-  outfitImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-    marginRight: 16,
+  tileNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
-  cardInfo: {
+  tileScoreContainer: {
+    backgroundColor: '#404040',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  tileScore: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  tileContent: {
     flex: 1,
     justifyContent: 'space-between',
   },
-  scoreContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  scoreCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  scoreText: {
-    color: '#ffffff',
+  tileCategory: {
     fontSize: 16,
-    fontWeight: '700',
-  },
-  scoreDetails: {
-    flex: 1,
-  },
-  scoreLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 2,
-  },
-  categoryText: {
-    fontSize: 14,
-    color: '#333',
     fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 4,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
-  dateText: {
+  tileDate: {
     fontSize: 12,
-    color: '#999',
-    alignSelf: 'flex-end',
+    color: '#B0B0B0',
+    marginBottom: 12,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
-  breakdownContainer: {
-    marginBottom: 16,
-  },
-  breakdownItem: {
+  miniScoreContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  breakdownLabel: {
-    fontSize: 12,
-    color: '#666',
-    width: 60,
-  },
-  breakdownBar: {
-    flex: 1,
-    height: 6,
-    backgroundColor: '#e9ecef',
-    borderRadius: 3,
-    marginHorizontal: 12,
-    overflow: 'hidden',
-  },
-  breakdownFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  breakdownScore: {
-    fontSize: 12,
-    color: '#333',
-    fontWeight: '600',
-    width: 20,
-    textAlign: 'right',
-  },
-  highlightsContainer: {
+    justifyContent: 'space-between',
     marginBottom: 12,
   },
-  suggestionsContainer: {
-    marginBottom: 0,
+  miniScoreItem: {
+    alignItems: 'center',
   },
-  sectionTitle: {
+  miniScoreLabel: {
+    fontSize: 10,
+    color: '#B0B0B0',
+    marginBottom: 4,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  miniScoreValue: {
     fontSize: 12,
+    color: '#FFFFFF',
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 6,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
-  highlightText: {
-    fontSize: 12,
-    color: '#10B981',
+  tileHighlight: {
+    fontSize: 11,
+    color: '#B0B0B0',
     lineHeight: 16,
-    marginBottom: 2,
-  },
-  suggestionText: {
-    fontSize: 12,
-    color: '#667eea',
-    lineHeight: 16,
+    fontStyle: 'italic',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 });

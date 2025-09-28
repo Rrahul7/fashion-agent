@@ -224,7 +224,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       Toast.show({
         type: 'success',
         text1: 'Registration Successful',
-        text2: newUser.name ? `Welcome to Fashion Agent, ${newUser.name}!` : 'Welcome to Fashion Agent!',
+        text2: newUser.name ? `Welcome to Drip, ${newUser.name}!` : 'Welcome to Drip!',
       });
 
       // Store user preferences
