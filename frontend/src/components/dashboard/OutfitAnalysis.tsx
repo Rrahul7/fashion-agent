@@ -10,7 +10,12 @@ import {
   Target,
   Palette,
   Shirt,
-  TrendingUp
+  TrendingUp,
+  Scissors,
+  Layers,
+  Lightbulb,
+  AlertTriangle,
+  Eye
 } from 'lucide-react'
 import { reviewsApi } from '@/lib/api'
 import toast from 'react-hot-toast'
@@ -20,11 +25,24 @@ interface OutfitAnalysisProps {
     reviewId: string
     outfitAnalysis: {
       styleCategory: string
+      styleCategoryScore: number
       fit: string
+      fitScore: number
       colorHarmony: string
+      colorHarmonyScore: number
       occasionSuitability: string
+      occasionScore: number
+      proportionBalance: string
+      proportionScore: number
+      fabricSynergy: string
+      fabricScore: number
+      stylingSophistication: string
+      sophisticationScore: number
+      overallScore: number
       highlights: string[]
       improvementSuggestions: string[]
+      expertInsights: string[]
+      technicalFlaws: string[]
     }
   }
   imageUrl?: string | null
@@ -51,9 +69,22 @@ export function OutfitAnalysis({ result, imageUrl, onStartOver }: OutfitAnalysis
     }
   }
 
-  const getScoreColor = (value: string) => {
-    const positive = ['excellent', 'perfect', 'good', 'great']
-    const negative = ['poor', 'bad', 'clashing', 'tight', 'loose']
+  // Convert 100-point scale to 10-point scale
+  const convertScore = (score: number): number => {
+    return Math.round(score / 10)
+  }
+
+  const getScoreColor = (score: number) => {
+    const convertedScore = convertScore(score)
+    if (convertedScore >= 8) return 'text-green-600 bg-green-50 border-green-200'
+    if (convertedScore >= 6) return 'text-blue-600 bg-blue-50 border-blue-200'
+    if (convertedScore >= 4) return 'text-yellow-600 bg-yellow-50 border-yellow-200'
+    return 'text-red-600 bg-red-50 border-red-200'
+  }
+
+  const getScoreLabel = (value: string) => {
+    const positive = ['excellent', 'perfect', 'exceptional', 'museum-quality']
+    const negative = ['poor', 'bad', 'clashing', 'amateur', 'major overhaul']
     
     if (positive.some(word => value.toLowerCase().includes(word))) {
       return 'text-green-600 bg-green-50'
@@ -64,85 +95,276 @@ export function OutfitAnalysis({ result, imageUrl, onStartOver }: OutfitAnalysis
     return 'text-blue-600 bg-blue-50'
   }
 
+  // Check for "no outfit" case
+  if (outfitAnalysis.styleCategory === 'no outfit' || outfitAnalysis.overallScore === 0) {
+    return (
+      <div className="space-y-6 animate-slide-up">
+        {/* Header */}
+        <div className="text-center">
+          <div className="flex justify-center mb-4">
+            <div className="bg-red-100 p-3 rounded-full">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">No Outfit Detected</h2>
+          <p className="text-gray-600">We couldn't find substantial clothing to analyze in this image</p>
+        </div>
+
+        {/* Image Preview */}
+        {imageUrl && (
+          <div className="rounded-xl overflow-hidden bg-gray-100 shadow-lg">
+            <img 
+              src={imageUrl} 
+              alt="Uploaded image" 
+              className="w-full h-56 object-cover"
+            />
+          </div>
+        )}
+
+        {/* No Outfit Message */}
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
+          <div className="flex items-center mb-4">
+            <AlertTriangle className="w-6 h-6 text-orange-600 mr-3" />
+            <h3 className="font-semibold text-orange-800">Fashion Analysis Not Possible</h3>
+          </div>
+          <div className="space-y-4">
+            <p className="text-orange-700">
+              Our AI fashion expert needs to see actual clothing to provide analysis. This image appears to show:
+            </p>
+            <ul className="text-orange-700 space-y-2">
+              <li className="flex items-start">
+                <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-2 mr-3 flex-shrink-0"></div>
+                No substantial clothing or garments visible
+              </li>
+              <li className="flex items-start">
+                <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-2 mr-3 flex-shrink-0"></div>
+                Insufficient outfit elements for fashion evaluation
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Suggestions */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <div className="flex items-center mb-4">
+            <Lightbulb className="w-6 h-6 text-blue-600 mr-3" />
+            <h3 className="font-semibold text-blue-800">For Best Results</h3>
+          </div>
+          <ul className="text-blue-700 space-y-2">
+            <li className="flex items-start">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 mr-3 flex-shrink-0"></div>
+              Upload a photo showing a complete outfit with clothing
+            </li>
+            <li className="flex items-start">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 mr-3 flex-shrink-0"></div>
+              Include tops, bottoms, and accessories when possible
+            </li>
+            <li className="flex items-start">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 mr-3 flex-shrink-0"></div>
+              Make sure the full outfit is clearly visible
+            </li>
+            <li className="flex items-start">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 mr-3 flex-shrink-0"></div>
+              Use good lighting and a clear background
+            </li>
+          </ul>
+        </div>
+
+        {/* Actions */}
+        <div className="space-y-3">
+          <button
+            onClick={onStartOver}
+            className="w-full btn-primary flex items-center justify-center"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Upload New Outfit Photo
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6 animate-slide-up">
       {/* Header */}
       <div className="text-center">
         <div className="flex justify-center mb-4">
-          <div className="bg-gray-100 p-3 rounded-full">
-            <Sparkles className="w-8 h-8 text-gray-700" />
+          <div className="bg-gradient-to-br from-purple-600 to-pink-600 p-3 rounded-full">
+            <Sparkles className="w-8 h-8 text-white" />
           </div>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Analysis Complete!</h2>
-        <p className="text-gray-600">Here's what our AI fashion expert thinks</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Expert Analysis Complete!</h2>
+        <p className="text-gray-600">Professional fashion insights with expert-level scoring</p>
+      </div>
+
+      {/* Overall Score */}
+      <div className="bg-gradient-to-r from-gray-900 to-gray-700 rounded-xl p-6 text-center text-white">
+        <div className="text-4xl font-bold mb-2">{convertScore(outfitAnalysis.overallScore)}/10</div>
+        <div className="text-gray-300">Overall Fashion Score</div>
       </div>
 
       {/* Image Preview */}
       {imageUrl && (
-        <div className="rounded-xl overflow-hidden bg-gray-100">
+        <div className="rounded-xl overflow-hidden bg-gray-100 shadow-lg">
           <img 
             src={imageUrl} 
             alt="Analyzed outfit" 
-            className="w-full h-48 object-cover"
+            className="w-full h-56 object-cover"
           />
         </div>
       )}
 
-      {/* Analysis Cards */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center mb-2">
-            <Shirt className="w-5 h-5 text-gray-600 mr-2" />
-            <span className="text-sm font-medium text-gray-600">Style</span>
+      {/* Expert Analysis Tiles - Core Assessments */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Core Assessments</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className={`bg-white border-2 rounded-lg p-4 ${getScoreColor(outfitAnalysis.styleCategoryScore)}`}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <Shirt className="w-5 h-5 text-gray-600 mr-2" />
+                <span className="text-sm font-medium text-gray-600">Style Category</span>
+              </div>
+              <div className="text-xl font-bold">{convertScore(outfitAnalysis.styleCategoryScore)}/10</div>
+            </div>
+            <div className={`px-2 py-1 rounded text-sm font-medium capitalize ${getScoreLabel(outfitAnalysis.styleCategory)}`}>
+              {outfitAnalysis.styleCategory}
+            </div>
           </div>
-          <div className={`px-2 py-1 rounded text-sm font-medium capitalize ${getScoreColor(outfitAnalysis.styleCategory)}`}>
-            {outfitAnalysis.styleCategory}
+
+          <div className={`bg-white border-2 rounded-lg p-4 ${getScoreColor(outfitAnalysis.fitScore)}`}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <Target className="w-5 h-5 text-gray-600 mr-2" />
+                <span className="text-sm font-medium text-gray-600">Technical Fit</span>
+              </div>
+              <div className="text-xl font-bold">{convertScore(outfitAnalysis.fitScore)}/10</div>
+            </div>
+            <div className={`px-2 py-1 rounded text-sm font-medium capitalize ${getScoreLabel(outfitAnalysis.fit)}`}>
+              {outfitAnalysis.fit}
+            </div>
+          </div>
+
+          <div className={`bg-white border-2 rounded-lg p-4 ${getScoreColor(outfitAnalysis.colorHarmonyScore)}`}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <Palette className="w-5 h-5 text-gray-600 mr-2" />
+                <span className="text-sm font-medium text-gray-600">Color Theory</span>
+              </div>
+              <div className="text-xl font-bold">{convertScore(outfitAnalysis.colorHarmonyScore)}/10</div>
+            </div>
+            <div className={`px-2 py-1 rounded text-sm font-medium capitalize ${getScoreLabel(outfitAnalysis.colorHarmony)}`}>
+              {outfitAnalysis.colorHarmony}
+            </div>
+          </div>
+
+          <div className={`bg-white border-2 rounded-lg p-4 ${getScoreColor(outfitAnalysis.occasionScore)}`}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <Star className="w-5 h-5 text-gray-600 mr-2" />
+                <span className="text-sm font-medium text-gray-600">Occasion</span>
+              </div>
+              <div className="text-xl font-bold">{convertScore(outfitAnalysis.occasionScore)}/10</div>
+            </div>
+            <div className={`px-2 py-1 rounded text-sm font-medium capitalize ${getScoreLabel(outfitAnalysis.occasionSuitability)}`}>
+              {outfitAnalysis.occasionSuitability}
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center mb-2">
-            <Target className="w-5 h-5 text-gray-600 mr-2" />
-            <span className="text-sm font-medium text-gray-600">Fit</span>
+      {/* Expert-Level Parameters */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Expert Analysis</h3>
+        <div className="grid grid-cols-1 gap-4">
+          <div className={`bg-white border-2 rounded-lg p-4 ${getScoreColor(outfitAnalysis.proportionScore)}`}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <Scissors className="w-5 h-5 text-gray-600 mr-2" />
+                <span className="text-sm font-medium text-gray-600">Proportion & Visual Weight</span>
+              </div>
+              <div className="text-xl font-bold">{convertScore(outfitAnalysis.proportionScore)}/10</div>
+            </div>
+            <div className={`px-2 py-1 rounded text-sm font-medium capitalize ${getScoreLabel(outfitAnalysis.proportionBalance)}`}>
+              {outfitAnalysis.proportionBalance}
+            </div>
           </div>
-          <div className={`px-2 py-1 rounded text-sm font-medium capitalize ${getScoreColor(outfitAnalysis.fit)}`}>
-            {outfitAnalysis.fit}
-          </div>
-        </div>
 
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center mb-2">
-            <Palette className="w-5 h-5 text-gray-600 mr-2" />
-            <span className="text-sm font-medium text-gray-600">Colors</span>
+          <div className={`bg-white border-2 rounded-lg p-4 ${getScoreColor(outfitAnalysis.fabricScore)}`}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <Layers className="w-5 h-5 text-gray-600 mr-2" />
+                <span className="text-sm font-medium text-gray-600">Fabric Synergy & Merit</span>
+              </div>
+              <div className="text-xl font-bold">{convertScore(outfitAnalysis.fabricScore)}/10</div>
+            </div>
+            <div className={`px-2 py-1 rounded text-sm font-medium capitalize ${getScoreLabel(outfitAnalysis.fabricSynergy)}`}>
+              {outfitAnalysis.fabricSynergy}
+            </div>
           </div>
-          <div className={`px-2 py-1 rounded text-sm font-medium capitalize ${getScoreColor(outfitAnalysis.colorHarmony)}`}>
-            {outfitAnalysis.colorHarmony}
-          </div>
-        </div>
 
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center mb-2">
-            <Star className="w-5 h-5 text-gray-600 mr-2" />
-            <span className="text-sm font-medium text-gray-600">Occasion</span>
-          </div>
-          <div className={`px-2 py-1 rounded text-sm font-medium capitalize ${getScoreColor(outfitAnalysis.occasionSuitability)}`}>
-            {outfitAnalysis.occasionSuitability}
+          <div className={`bg-white border-2 rounded-lg p-4 ${getScoreColor(outfitAnalysis.sophisticationScore)}`}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <Eye className="w-5 h-5 text-gray-600 mr-2" />
+                <span className="text-sm font-medium text-gray-600">Styling Sophistication</span>
+              </div>
+              <div className="text-xl font-bold">{convertScore(outfitAnalysis.sophisticationScore)}/10</div>
+            </div>
+            <div className={`px-2 py-1 rounded text-sm font-medium capitalize ${getScoreLabel(outfitAnalysis.stylingSophistication)}`}>
+              {outfitAnalysis.stylingSophistication}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Highlights */}
       {outfitAnalysis.highlights.length > 0 && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center mb-3">
-            <TrendingUp className="w-5 h-5 text-gray-700 mr-2" />
-            <h3 className="font-medium text-gray-800">What's Working Well</h3>
+            <TrendingUp className="w-5 h-5 text-green-700 mr-2" />
+            <h3 className="font-semibold text-green-800">What's Working Well</h3>
           </div>
           <ul className="space-y-2">
             {outfitAnalysis.highlights.map((highlight, index) => (
-              <li key={index} className="flex items-start text-sm text-gray-700">
-                <div className="w-1.5 h-1.5 rounded-full bg-gray-500 mt-2 mr-3 flex-shrink-0"></div>
+              <li key={index} className="flex items-start text-sm text-green-700">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2 mr-3 flex-shrink-0"></div>
                 {highlight}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Expert Insights */}
+      {outfitAnalysis.expertInsights && outfitAnalysis.expertInsights.length > 0 && (
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="flex items-center mb-3">
+            <Lightbulb className="w-5 h-5 text-purple-700 mr-2" />
+            <h3 className="font-semibold text-purple-800">Expert Insights</h3>
+          </div>
+          <ul className="space-y-2">
+            {outfitAnalysis.expertInsights.map((insight, index) => (
+              <li key={index} className="flex items-start text-sm text-purple-700">
+                <div className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 mr-3 flex-shrink-0"></div>
+                {insight}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Technical Flaws */}
+      {outfitAnalysis.technicalFlaws && outfitAnalysis.technicalFlaws.length > 0 && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="flex items-center mb-3">
+            <AlertTriangle className="w-5 h-5 text-orange-700 mr-2" />
+            <h3 className="font-semibold text-orange-800">Technical Analysis & Areas for Improvement</h3>
+          </div>
+          <ul className="space-y-2">
+            {outfitAnalysis.technicalFlaws.map((flaw, index) => (
+              <li key={index} className="flex items-start text-sm text-orange-700">
+                <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-2 mr-3 flex-shrink-0"></div>
+                {flaw}
               </li>
             ))}
           </ul>
@@ -151,15 +373,15 @@ export function OutfitAnalysis({ result, imageUrl, onStartOver }: OutfitAnalysis
 
       {/* Suggestions */}
       {outfitAnalysis.improvementSuggestions.length > 0 && (
-        <div className="bg-gray-50 border border-gray-300 rounded-lg p-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center mb-3">
-            <Sparkles className="w-5 h-5 text-gray-700 mr-2" />
-            <h3 className="font-medium text-gray-800">Suggestions to Elevate</h3>
+            <Sparkles className="w-5 h-5 text-blue-700 mr-2" />
+            <h3 className="font-semibold text-blue-800">Professional Recommendations</h3>
           </div>
           <ul className="space-y-2">
             {outfitAnalysis.improvementSuggestions.map((suggestion, index) => (
-              <li key={index} className="flex items-start text-sm text-gray-700">
-                <div className="w-1.5 h-1.5 rounded-full bg-gray-500 mt-2 mr-3 flex-shrink-0"></div>
+              <li key={index} className="flex items-start text-sm text-blue-700">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 mr-3 flex-shrink-0"></div>
                 {suggestion}
               </li>
             ))}
@@ -170,7 +392,7 @@ export function OutfitAnalysis({ result, imageUrl, onStartOver }: OutfitAnalysis
       {/* Feedback Section */}
       {!feedbackGiven && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <h3 className="font-medium text-gray-800 mb-3 text-center">Was this analysis helpful?</h3>
+          <h3 className="font-medium text-gray-800 mb-3 text-center">How was this expert analysis?</h3>
           <div className="flex space-x-3">
             <button
               onClick={() => handleFeedback(true)}
@@ -178,7 +400,7 @@ export function OutfitAnalysis({ result, imageUrl, onStartOver }: OutfitAnalysis
               className="flex-1 btn-outline border-gray-400 text-gray-700 hover:bg-gray-100 flex items-center justify-center"
             >
               <ThumbsUp className="w-4 h-4 mr-2" />
-              Yes, helpful!
+              Very insightful!
             </button>
             <button
               onClick={() => handleFeedback(false)}
@@ -186,7 +408,7 @@ export function OutfitAnalysis({ result, imageUrl, onStartOver }: OutfitAnalysis
               className="flex-1 btn-outline border-gray-400 text-gray-700 hover:bg-gray-100 flex items-center justify-center"
             >
               <ThumbsDown className="w-4 h-4 mr-2" />
-              Needs work
+              Could be better
             </button>
           </div>
         </div>
@@ -195,7 +417,7 @@ export function OutfitAnalysis({ result, imageUrl, onStartOver }: OutfitAnalysis
       {feedbackGiven && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
           <p className="text-gray-800 font-medium">Thanks for your feedback!</p>
-          <p className="text-gray-600 text-sm mt-1">This helps us improve our AI fashion expert</p>
+          <p className="text-gray-600 text-sm mt-1">This helps us refine our expert fashion AI</p>
         </div>
       )}
 

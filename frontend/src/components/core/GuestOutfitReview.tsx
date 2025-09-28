@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Camera, Upload, Sparkles, Star, Target, Palette, Shirt, TrendingUp, RefreshCw, MessageCircle } from 'lucide-react'
+import { Camera, Upload, Sparkles, Star, Target, Palette, Shirt, TrendingUp, RefreshCw, MessageCircle, AlertTriangle, Lightbulb } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { FeedbackModal } from './FeedbackModal'
 
@@ -21,9 +21,17 @@ interface OutfitAnalysis {
   colorHarmonyScore: number
   occasionSuitability: string
   occasionScore: number
+  proportionBalance: string
+  proportionScore: number
+  fabricSynergy: string
+  fabricScore: number
+  stylingSophistication: string
+  sophisticationScore: number
   overallScore: number
   highlights: string[]
   improvementSuggestions: string[]
+  expertInsights?: string[]
+  technicalFlaws?: string[]
 }
 
 interface ReviewResult {
@@ -139,6 +147,124 @@ export function GuestOutfitReview() {
 
   if (result) {
     const { outfitAnalysis } = result
+
+    // Check for "no outfit" case
+    if (outfitAnalysis.styleCategory === 'no outfit' || outfitAnalysis.overallScore === 0) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+          <div className="max-w-4xl mx-auto px-4 py-8">
+            {/* Header with usage info */}
+            <div className="text-center mb-8">
+              <div className="flex justify-center items-center mb-4">
+                <div className="bg-white shadow-lg p-4 rounded-full">
+                  <AlertTriangle className="w-8 h-8 text-red-600" />
+                </div>
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">No Outfit Detected</h1>
+              <p className="text-gray-600 mb-4">We couldn't find substantial clothing to analyze in this image</p>
+              
+              {guestUsage && (
+                <div className="inline-flex items-center bg-white border border-gray-200 rounded-full px-4 py-2 text-sm">
+                  <span className="text-gray-600 mr-2">Guest Reviews:</span>
+                  <span className="font-semibold text-indigo-600">{guestUsage.used}/{guestUsage.limit}</span>
+                  {guestUsage.remaining <= 1 && (
+                    <span className="ml-2 text-orange-600 text-xs">({guestUsage.remaining} remaining)</span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Image Preview */}
+            {imagePreview && (
+              <div className="mb-8 text-center">
+                <img 
+                  src={imagePreview} 
+                  alt="Uploaded image" 
+                  className="max-w-md mx-auto rounded-2xl shadow-lg"
+                />
+              </div>
+            )}
+
+            {/* No Outfit Message */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+              <div className="flex items-center mb-4">
+                <AlertTriangle className="w-6 h-6 text-orange-600 mr-3" />
+                <h3 className="text-xl font-semibold text-gray-900">Fashion Analysis Not Possible</h3>
+              </div>
+              <div className="space-y-4">
+                <p className="text-gray-700">
+                  Our AI fashion expert needs to see actual clothing to provide analysis. This image appears to show:
+                </p>
+                <ul className="text-gray-700 space-y-3">
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 rounded-full bg-orange-500 mt-2 mr-4 flex-shrink-0"></div>
+                    <span>No substantial clothing or garments visible</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 rounded-full bg-orange-500 mt-2 mr-4 flex-shrink-0"></div>
+                    <span>Insufficient outfit elements for fashion evaluation</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Suggestions */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+              <div className="flex items-center mb-4">
+                <Lightbulb className="w-6 h-6 text-indigo-600 mr-3" />
+                <h3 className="text-xl font-semibold text-gray-900">For Best Results</h3>
+              </div>
+              <ul className="text-gray-700 space-y-3">
+                <li className="flex items-start">
+                  <div className="w-2 h-2 rounded-full bg-indigo-500 mt-2 mr-4 flex-shrink-0"></div>
+                  <span>Upload a photo showing a complete outfit with clothing</span>
+                </li>
+                <li className="flex items-start">
+                  <div className="w-2 h-2 rounded-full bg-indigo-500 mt-2 mr-4 flex-shrink-0"></div>
+                  <span>Include tops, bottoms, and accessories when possible</span>
+                </li>
+                <li className="flex items-start">
+                  <div className="w-2 h-2 rounded-full bg-indigo-500 mt-2 mr-4 flex-shrink-0"></div>
+                  <span>Make sure the full outfit is clearly visible</span>
+                </li>
+                <li className="flex items-start">
+                  <div className="w-2 h-2 rounded-full bg-indigo-500 mt-2 mr-4 flex-shrink-0"></div>
+                  <span>Use good lighting and a clear background</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Actions */}
+            <div className="text-center space-y-4">
+              <button
+                onClick={startOver}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-8 rounded-xl flex items-center justify-center mx-auto transition-colors"
+              >
+                <RefreshCw className="w-5 h-5 mr-2" />
+                Upload New Outfit Photo
+              </button>
+              
+              {guestUsage.remaining <= 1 && (
+                <div className="bg-orange-50 border border-orange-200 rounded-xl p-6">
+                  <h3 className="font-semibold text-orange-900 mb-2">
+                    {guestUsage.remaining === 0 ? 'All Reviews Used!' : 'Last Free Review!'}
+                  </h3>
+                  <p className="text-orange-800 mb-4">
+                    {guestUsage.remaining === 0 
+                      ? 'Sign up for unlimited outfit reviews and advanced features!'
+                      : 'You have 1 review left. Sign up for unlimited access!'
+                    }
+                  </p>
+                  <button className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors">
+                    Create Free Account
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )
+    }
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">

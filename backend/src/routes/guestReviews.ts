@@ -94,7 +94,7 @@ router.post(
       );
 
       // Analyze outfit with AI (no user profile for guests)
-      const analysis = await analyzeOutfit(uploadResult.secureUrl);
+      const analysis = await analyzeOutfit(uploadResult.secureUrl, null, description);
 
       // Create review record
       const review = await prisma.review.create({
@@ -113,9 +113,17 @@ router.post(
           colorHarmonyScore: analysis.colorHarmonyScore,
           occasionSuitability: analysis.occasionSuitability,
           occasionScore: analysis.occasionScore,
+          proportionBalance: analysis.proportionBalance,
+          proportionScore: analysis.proportionScore,
+          fabricSynergy: analysis.fabricSynergy,
+          fabricScore: analysis.fabricScore,
+          stylingSophistication: analysis.stylingSophistication,
+          sophisticationScore: analysis.sophisticationScore,
           overallScore: analysis.overallScore,
           highlights: analysis.highlights,
           improvementSuggestions: analysis.improvementSuggestions,
+          expertInsights: analysis.expertInsights,
+          technicalFlaws: analysis.technicalFlaws,
         }
       });
 
@@ -136,9 +144,17 @@ router.post(
           colorHarmonyScore: review.colorHarmonyScore,
           occasionSuitability: review.occasionSuitability,
           occasionScore: review.occasionScore,
+          proportionBalance: review.proportionBalance,
+          proportionScore: review.proportionScore,
+          fabricSynergy: review.fabricSynergy,
+          fabricScore: review.fabricScore,
+          stylingSophistication: review.stylingSophistication,
+          sophisticationScore: review.sophisticationScore,
           overallScore: review.overallScore,
           highlights: review.highlights,
           improvementSuggestions: review.improvementSuggestions,
+          expertInsights: review.expertInsights,
+          technicalFlaws: review.technicalFlaws,
         },
         guestUsage: usage,
       });

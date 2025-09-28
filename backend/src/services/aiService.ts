@@ -9,9 +9,17 @@ export interface OutfitAnalysis {
   colorHarmonyScore: number;
   occasionSuitability: string;
   occasionScore: number;
+  proportionBalance: string;
+  proportionScore: number;
+  fabricSynergy: string;
+  fabricScore: number;
+  stylingSophistication: string;
+  sophisticationScore: number;
   overallScore: number;
   highlights: string[];
   improvementSuggestions: string[];
+  expertInsights: string[];
+  technicalFlaws: string[];
 }
 
 interface OpenRouterResponse {
@@ -45,15 +53,17 @@ export interface UserProfile {
 
 export async function analyzeOutfit(
   imageUrl: string,
-  userProfile?: UserProfile | null
+  userProfile?: UserProfile | null,
+  description?: string | null
 ): Promise<OutfitAnalysis> {
   try {
     console.log('Analyzing outfit image with AI:', imageUrl);
     console.log('User profile context:', userProfile);
+    console.log('User description:', description);
 
     // Use OpenRouter if configured, otherwise fall back to mock
     if (config.ai.openrouterApiKey) {
-      return await analyzeWithOpenRouter(imageUrl, userProfile);
+      return await analyzeWithOpenRouter(imageUrl, userProfile, description);
     } else {
       console.warn('OpenRouter API key not configured, using mock analysis');
       return await getMockAnalysis();
@@ -72,9 +82,17 @@ export async function analyzeOutfit(
       colorHarmonyScore: 70,
       occasionSuitability: 'casual outing',
       occasionScore: 85,
-      overallScore: 77,
+      proportionBalance: 'balanced',
+      proportionScore: 75,
+      fabricSynergy: 'compatible',
+      fabricScore: 70,
+      stylingSophistication: 'basic',
+      sophisticationScore: 65,
+      overallScore: 73,
       highlights: ['Clean and presentable look'],
       improvementSuggestions: ['Consider accessorizing to add personality'],
+      expertInsights: ['Outfit follows basic style principles'],
+      technicalFlaws: ['Limited styling creativity evident'],
     };
   }
 }
@@ -131,12 +149,12 @@ function getRandomSuggestions(): string[] {
 }
 
 // OpenRouter AI Analysis Implementation
-export async function analyzeWithOpenRouter(imageUrl: string, userProfile?: UserProfile | null): Promise<OutfitAnalysis> {
+export async function analyzeWithOpenRouter(imageUrl: string, userProfile?: UserProfile | null, description?: string | null): Promise<OutfitAnalysis> {
   if (!config.ai.openrouterApiKey) {
     throw new Error('OpenRouter API key not configured');
   }
 
-  const prompt = createOutfitAnalysisPrompt(userProfile);
+  const prompt = createOutfitAnalysisPrompt(userProfile, description);
   
   try {
     const response = await fetch(config.ai.openrouterUrl, {
@@ -194,12 +212,19 @@ export async function analyzeWithOpenRouter(imageUrl: string, userProfile?: User
     
     // Validate required fields
     if (!analysis.styleCategory || !analysis.fit || !analysis.colorHarmony || 
-        !analysis.occasionSuitability || !Array.isArray(analysis.highlights) || 
+        !analysis.occasionSuitability || !analysis.proportionBalance || 
+        !analysis.fabricSynergy || !analysis.stylingSophistication ||
+        !Array.isArray(analysis.highlights) || 
         !Array.isArray(analysis.improvementSuggestions) ||
+        !Array.isArray(analysis.expertInsights) ||
+        !Array.isArray(analysis.technicalFlaws) ||
         typeof analysis.styleCategoryScore !== 'number' ||
         typeof analysis.fitScore !== 'number' ||
         typeof analysis.colorHarmonyScore !== 'number' ||
         typeof analysis.occasionScore !== 'number' ||
+        typeof analysis.proportionScore !== 'number' ||
+        typeof analysis.fabricScore !== 'number' ||
+        typeof analysis.sophisticationScore !== 'number' ||
         typeof analysis.overallScore !== 'number') {
       throw new Error('Invalid response format from AI');
     }
@@ -213,8 +238,9 @@ export async function analyzeWithOpenRouter(imageUrl: string, userProfile?: User
 }
 
 // Create comprehensive outfit analysis prompt with JSON schema
-function createOutfitAnalysisPrompt(userProfile?: UserProfile | null): string {
+function createOutfitAnalysisPrompt(userProfile?: UserProfile | null, description?: string | null): string {
   let profileContext = '';
+  let descriptionContext = '';
   
   if (userProfile) {
     const profileDetails = [];
@@ -229,34 +255,105 @@ function createOutfitAnalysisPrompt(userProfile?: UserProfile | null): string {
     }
   }
 
-  return `You are a professional fashion stylist and image consultant. Analyze the outfit in this image and provide detailed feedback in JSON format.
+  if (description && description.trim()) {
+    descriptionContext = `\n\nUser's Context & Intent:\n"${description.trim()}"\n\nIMPORTANT: Consider this context when analyzing the outfit. If the user mentions specific occasions, style goals, or preferences, factor these into your expert assessment. Tailor your recommendations to align with their stated intentions while maintaining professional honesty about what works and what doesn't.`;
+  }
 
-${profileContext}
+  return `You are an elite fashion consultant with expertise in haute couture, fashion psychology, and advanced styling theory. Provide an expert-level analysis that reveals insights beyond what typical fashion advice offers. Be brutally honest yet constructive - fashion excellence requires acknowledging flaws to achieve greatness.
 
-Analyze the following aspects:
+${profileContext}${descriptionContext}
 
-1. **Style Category**: Identify the main style (e.g., casual, formal, business casual, streetwear, bohemian, minimalist, traditional, sporty, etc.)
+## FIRST: OUTFIT VALIDATION
 
-2. **Fit Assessment**: Evaluate how well the clothes fit the person (perfect, good, loose, tight, needs adjustment)
+**CRITICAL STEP**: Before analyzing, you MUST verify there is an actual outfit to review:
+- Is the person wearing substantial clothing/garments (not just underwear, swimwear, or shirtless)?
+- Are there enough clothing elements to constitute a complete outfit?
+- Is this appropriate for fashion analysis?
 
-3. **Color Harmony**: Assess the color coordination (excellent, good, neutral, clashing, monochromatic)
+**IF NO SUBSTANTIAL OUTFIT IS PRESENT:**
+Return this JSON immediately (no further analysis needed):
+{
+  "styleCategory": "no outfit",
+  "styleCategoryScore": 0,
+  "fit": "no clothing present",
+  "fitScore": 0,
+  "colorHarmony": "not applicable",
+  "colorHarmonyScore": 0,
+  "occasionSuitability": "not applicable",
+  "occasionScore": 0,
+  "proportionBalance": "not applicable",
+  "proportionScore": 0,
+  "fabricSynergy": "not applicable",
+  "fabricScore": 0,
+  "stylingSophistication": "not applicable",
+  "sophisticationScore": 0,
+  "overallScore": 0,
+  "highlights": [],
+  "improvementSuggestions": ["Please upload an image with clothing/outfit to analyze", "Ensure the person is wearing substantial garments for fashion review"],
+  "expertInsights": ["Fashion analysis requires actual clothing elements to evaluate"],
+  "technicalFlaws": ["No clothing present to analyze"]
+}
 
-4. **Occasion Suitability**: Determine what occasions this outfit is appropriate for (e.g., office, party, casual outing, date, formal event, workout, etc.)
+**ONLY IF A COMPLETE OUTFIT IS PRESENT**, proceed with the expert analysis framework below:
 
-5. **Highlights**: List 2-4 positive aspects of the outfit
+## EXPERT ANALYSIS FRAMEWORK
 
-6. **Improvement Suggestions**: Provide 2-4 specific, actionable suggestions to enhance the look
+### CORE ASSESSMENTS:
 
-Consider factors like:
-- Color theory and coordination
-- Proportions and silhouette
-- Texture and fabric combinations
-- Seasonal appropriateness
-- Personal style expression
-- Cultural context if applicable
-- Body type considerations (if profile provided)
+1. **Style Category & Execution**: Identify style and evaluate how successfully it's executed against professional standards
 
-**Important**: Respond ONLY with valid JSON in this exact format:
+2. **Technical Fit Analysis**: 
+   - Shoulder seam placement and construction
+   - Armhole cut and movement allowance  
+   - Hemline precision and proportion
+   - Waist suppression and body geometry
+   - Break points in trousers and sleeves
+
+3. **Advanced Color Theory**:
+   - Undertone harmony vs. surface color coordination
+   - Color temperature balance and seasonal appropriateness
+   - Value contrast for visual hierarchy
+   - Chroma saturation levels and their psychological impact
+
+4. **Occasion Contextual Intelligence**: Beyond basic appropriateness - consider power dynamics, cultural subtleties, and situational psychology
+
+### EXPERT-LEVEL PARAMETERS:
+
+5. **Proportion & Visual Weight Analysis**:
+   - Golden ratio adherence in silhouette
+   - Visual balance between upper/lower body
+   - Scale relationships between garments and body frame
+   - Line direction impact on perceived body geometry
+
+6. **Fabric Synergy & Technical Merit**:
+   - Weight distribution and drape interaction
+   - Texture contrast sophistication
+   - Seasonal fabric logic
+   - Quality indicators in construction details
+
+7. **Styling Sophistication Assessment**:
+   - Layering technique mastery
+   - Accessory integration and hierarchy
+   - Risk-taking vs. safe choices balance
+   - Evidence of personal style development vs. trend following
+
+### CRITICAL ANALYSIS REQUIREMENTS:
+
+- **Expert Insights**: Reveal fashion principles most people don't understand (color psychology, proportion theory, fabric behavior, style archetypes)
+- **Technical Flaws**: Identify specific issues that affect the outfit's success (fit problems, styling mistakes, missed opportunities)
+- **Honest Assessment**: Don't sugarcoat - fashion growth requires recognizing what isn't working
+
+Consider advanced factors like:
+- Bauhaus design principles in styling
+- Fashion archetypes and their psychological messaging
+- Seasonal color analysis theory
+- Kibbe body geometry principles  
+- French vs. Italian vs. British tailoring philosophies
+- Power dressing psychological impact
+- Trend vs. timeless style differentiation
+- Cultural fashion codes and their proper execution
+
+**CRITICAL**: Respond ONLY with valid JSON in this exact format:
 
 {
   "styleCategory": "string",
@@ -267,22 +364,42 @@ Consider factors like:
   "colorHarmonyScore": 75,
   "occasionSuitability": "string",
   "occasionScore": 90,
-  "overallScore": 82,
+  "proportionBalance": "string",
+  "proportionScore": 78,
+  "fabricSynergy": "string", 
+  "fabricScore": 73,
+  "stylingSophistication": "string",
+  "sophisticationScore": 82,
+  "overallScore": 79,
   "highlights": ["string", "string", "string"],
-  "improvementSuggestions": ["string", "string", "string"]
+  "improvementSuggestions": ["string", "string", "string"],
+  "expertInsights": ["string", "string", "string"],
+  "technicalFlaws": ["string", "string", "string"]
 }
 
 **Scoring Guidelines (0-100):**
-- 90-100: Exceptional/Perfect
-- 80-89: Very Good
-- 70-79: Good
-- 60-69: Fair/Needs Minor Improvement
-- 50-59: Below Average
-- 0-49: Poor/Needs Major Improvement
+- 90-100: Exceptional/Museum-Quality
+- 80-89: Very Good/Editorial-Ready  
+- 70-79: Good/Street Style Worthy
+- 60-69: Fair/Needs Refinement
+- 50-59: Below Average/Amateur Mistakes Evident
+- 0-49: Poor/Requires Major Overhaul
 
-Calculate overallScore as the average of the four individual scores.
+Calculate overallScore as average of all seven component scores.
 
-Be specific, constructive, and encouraging in your feedback. Focus on practical advice that can be easily implemented.`;
+**EXPERT INSIGHTS should reveal:**
+- Fashion principles most people don't know
+- Historical/designer references where relevant
+- Psychology behind style choices
+- Advanced styling techniques demonstrated or missed
+
+**TECHNICAL FLAWS must identify:**
+- Specific fit issues with tailoring terminology
+- Styling mistakes that undermine the look
+- Missed opportunities for elevated execution
+- Construction or quality problems visible
+
+BE DISCERNING - not every outfit deserves high scores. Fashion excellence is rare and should be recognized as such.`;
 }
 
 // Mock analysis function for fallback
@@ -294,7 +411,10 @@ async function getMockAnalysis(): Promise<OutfitAnalysis> {
   const fitScore = Math.floor(Math.random() * 30) + 60; // 60-90
   const colorHarmonyScore = Math.floor(Math.random() * 30) + 60; // 60-90
   const occasionScore = Math.floor(Math.random() * 30) + 60; // 60-90
-  const overallScore = Math.floor((styleCategoryScore + fitScore + colorHarmonyScore + occasionScore) / 4);
+  const proportionScore = Math.floor(Math.random() * 30) + 60; // 60-90
+  const fabricScore = Math.floor(Math.random() * 30) + 60; // 60-90
+  const sophisticationScore = Math.floor(Math.random() * 30) + 60; // 60-90
+  const overallScore = Math.floor((styleCategoryScore + fitScore + colorHarmonyScore + occasionScore + proportionScore + fabricScore + sophisticationScore) / 7);
 
   return {
     styleCategory: getRandomStyle(),
@@ -305,8 +425,16 @@ async function getMockAnalysis(): Promise<OutfitAnalysis> {
     colorHarmonyScore,
     occasionSuitability: getRandomOccasion(),
     occasionScore,
+    proportionBalance: 'balanced',
+    proportionScore,
+    fabricSynergy: 'compatible',
+    fabricScore,
+    stylingSophistication: 'moderate',
+    sophisticationScore,
     overallScore,
     highlights: getRandomHighlights(),
     improvementSuggestions: getRandomSuggestions(),
+    expertInsights: ['Good understanding of basic styling principles', 'Shows potential for style development'],
+    technicalFlaws: ['Minor adjustments needed for optimal fit', 'Could benefit from more adventurous styling choices'],
   };
 }

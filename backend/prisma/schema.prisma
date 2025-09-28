@@ -54,9 +54,20 @@ model Review {
   colorHarmonyScore     Int?
   occasionSuitability   String?
   occasionScore         Int?
+  
+  // Expert-level analysis fields
+  proportionBalance     String?
+  proportionScore       Int?
+  fabricSynergy         String?
+  fabricScore           Int?
+  stylingSophistication String?
+  sophisticationScore   Int?
+  
   overallScore          Int?
   highlights            String[]
   improvementSuggestions String[]
+  expertInsights        String[]
+  technicalFlaws        String[]
   
   // Enhanced feedback storage
   userFeedback          String?           // User's detailed feedback

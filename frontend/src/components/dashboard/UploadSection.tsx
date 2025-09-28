@@ -11,11 +11,24 @@ interface ReviewResult {
   reviewId: string
   outfitAnalysis: {
     styleCategory: string
+    styleCategoryScore: number
     fit: string
+    fitScore: number
     colorHarmony: string
+    colorHarmonyScore: number
     occasionSuitability: string
+    occasionScore: number
+    proportionBalance: string
+    proportionScore: number
+    fabricSynergy: string
+    fabricScore: number
+    stylingSophistication: string
+    sophisticationScore: number
+    overallScore: number
     highlights: string[]
     improvementSuggestions: string[]
+    expertInsights: string[]
+    technicalFlaws: string[]
   }
 }
 

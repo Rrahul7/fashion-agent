@@ -60,7 +60,7 @@ router.post(
       });
 
       // Analyze outfit with AI
-      const analysis = await analyzeOutfit(uploadResult.secureUrl, user?.profile);
+      const analysis = await analyzeOutfit(uploadResult.secureUrl, user?.profile, description);
 
       // Create review record
       const review = await prisma.review.create({
@@ -77,9 +77,17 @@ router.post(
           colorHarmonyScore: analysis.colorHarmonyScore,
           occasionSuitability: analysis.occasionSuitability,
           occasionScore: analysis.occasionScore,
+          proportionBalance: analysis.proportionBalance,
+          proportionScore: analysis.proportionScore,
+          fabricSynergy: analysis.fabricSynergy,
+          fabricScore: analysis.fabricScore,
+          stylingSophistication: analysis.stylingSophistication,
+          sophisticationScore: analysis.sophisticationScore,
           overallScore: analysis.overallScore,
           highlights: analysis.highlights,
           improvementSuggestions: analysis.improvementSuggestions,
+          expertInsights: analysis.expertInsights,
+          technicalFlaws: analysis.technicalFlaws,
         }
       });
 
@@ -125,9 +133,17 @@ router.post(
           colorHarmonyScore: review.colorHarmonyScore,
           occasionSuitability: review.occasionSuitability,
           occasionScore: review.occasionScore,
+          proportionBalance: review.proportionBalance,
+          proportionScore: review.proportionScore,
+          fabricSynergy: review.fabricSynergy,
+          fabricScore: review.fabricScore,
+          stylingSophistication: review.stylingSophistication,
+          sophisticationScore: review.sophisticationScore,
           overallScore: review.overallScore,
           highlights: review.highlights,
           improvementSuggestions: review.improvementSuggestions,
+          expertInsights: review.expertInsights,
+          technicalFlaws: review.technicalFlaws,
         }
       });
 
@@ -158,9 +174,17 @@ router.get('/', asyncHandler(async (req: AuthRequest, res: Response) => {
       colorHarmonyScore: true,
       occasionSuitability: true,
       occasionScore: true,
+      proportionBalance: true,
+      proportionScore: true,
+      fabricSynergy: true,
+      fabricScore: true,
+      stylingSophistication: true,
+      sophisticationScore: true,
       overallScore: true,
       highlights: true,
       improvementSuggestions: true,
+      expertInsights: true,
+      technicalFlaws: true,
       comparisonInsight: true,
       accepted: true,
       createdAt: true,
