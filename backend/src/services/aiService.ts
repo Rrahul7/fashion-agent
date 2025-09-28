@@ -2,9 +2,14 @@ import { config } from '../config/config';
 
 export interface OutfitAnalysis {
   styleCategory: string;
+  styleCategoryScore: number;
   fit: string;
+  fitScore: number;
   colorHarmony: string;
+  colorHarmonyScore: number;
   occasionSuitability: string;
+  occasionScore: number;
+  overallScore: number;
   highlights: string[];
   improvementSuggestions: string[];
 }
@@ -57,12 +62,17 @@ export async function analyzeOutfit(
   } catch (error) {
     console.error('AI analysis error:', error);
     
-    // Return fallback analysis
+    // Return fallback analysis with scores
     return {
       styleCategory: 'casual',
+      styleCategoryScore: 75,
       fit: 'good',
+      fitScore: 80,
       colorHarmony: 'neutral',
+      colorHarmonyScore: 70,
       occasionSuitability: 'casual outing',
+      occasionScore: 85,
+      overallScore: 77,
       highlights: ['Clean and presentable look'],
       improvementSuggestions: ['Consider accessorizing to add personality'],
     };
@@ -185,7 +195,12 @@ export async function analyzeWithOpenRouter(imageUrl: string, userProfile?: User
     // Validate required fields
     if (!analysis.styleCategory || !analysis.fit || !analysis.colorHarmony || 
         !analysis.occasionSuitability || !Array.isArray(analysis.highlights) || 
-        !Array.isArray(analysis.improvementSuggestions)) {
+        !Array.isArray(analysis.improvementSuggestions) ||
+        typeof analysis.styleCategoryScore !== 'number' ||
+        typeof analysis.fitScore !== 'number' ||
+        typeof analysis.colorHarmonyScore !== 'number' ||
+        typeof analysis.occasionScore !== 'number' ||
+        typeof analysis.overallScore !== 'number') {
       throw new Error('Invalid response format from AI');
     }
 
@@ -245,12 +260,27 @@ Consider factors like:
 
 {
   "styleCategory": "string",
+  "styleCategoryScore": 85,
   "fit": "string", 
+  "fitScore": 80,
   "colorHarmony": "string",
+  "colorHarmonyScore": 75,
   "occasionSuitability": "string",
+  "occasionScore": 90,
+  "overallScore": 82,
   "highlights": ["string", "string", "string"],
   "improvementSuggestions": ["string", "string", "string"]
 }
+
+**Scoring Guidelines (0-100):**
+- 90-100: Exceptional/Perfect
+- 80-89: Very Good
+- 70-79: Good
+- 60-69: Fair/Needs Minor Improvement
+- 50-59: Below Average
+- 0-49: Poor/Needs Major Improvement
+
+Calculate overallScore as the average of the four individual scores.
 
 Be specific, constructive, and encouraging in your feedback. Focus on practical advice that can be easily implemented.`;
 }
@@ -260,11 +290,22 @@ async function getMockAnalysis(): Promise<OutfitAnalysis> {
   // Simulate AI processing delay
   await new Promise(resolve => setTimeout(resolve, 1000));
 
+  const styleCategoryScore = Math.floor(Math.random() * 30) + 60; // 60-90
+  const fitScore = Math.floor(Math.random() * 30) + 60; // 60-90
+  const colorHarmonyScore = Math.floor(Math.random() * 30) + 60; // 60-90
+  const occasionScore = Math.floor(Math.random() * 30) + 60; // 60-90
+  const overallScore = Math.floor((styleCategoryScore + fitScore + colorHarmonyScore + occasionScore) / 4);
+
   return {
     styleCategory: getRandomStyle(),
+    styleCategoryScore,
     fit: getRandomFit(),
+    fitScore,
     colorHarmony: getRandomColorHarmony(),
+    colorHarmonyScore,
     occasionSuitability: getRandomOccasion(),
+    occasionScore,
+    overallScore,
     highlights: getRandomHighlights(),
     improvementSuggestions: getRandomSuggestions(),
   };

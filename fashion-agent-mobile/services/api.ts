@@ -96,6 +96,20 @@ export const SecurityUtils = {
     }
   },
 
+  // Force clear all authentication and guest data
+  clearAllAuth: async () => {
+    try {
+      await SecureStore.deleteItemAsync('auth_token');
+      await SecureStore.deleteItemAsync('refresh_token');
+      await SecureStore.deleteItemAsync('token_expiry');
+      await SecureStore.deleteItemAsync('user_data');
+      await SecureStore.deleteItemAsync('guest_session_id');
+      console.log('🧹 All authentication data cleared');
+    } catch (error) {
+      console.error('Error clearing all auth data:', error);
+    }
+  },
+
   // Validate API response integrity
   validateResponse: (response: AxiosResponse): boolean => {
     // Basic response validation
@@ -108,6 +122,44 @@ export const SecurityUtils = {
   },
 };
 
+// Guest session management
+const GUEST_SESSION_KEY = 'guest_session_id';
+
+const GuestUtils = {
+  // Get stored guest session ID
+  getGuestSessionId: async (): Promise<string | null> => {
+    try {
+      return await SecureStore.getItemAsync(GUEST_SESSION_KEY);
+    } catch (error) {
+      console.error('Error retrieving guest session:', error);
+      return null;
+    }
+  },
+
+  // Store guest session ID
+  setGuestSessionId: async (sessionId: string) => {
+    try {
+      await SecureStore.setItemAsync(GUEST_SESSION_KEY, sessionId);
+    } catch (error) {
+      console.error('Error storing guest session:', error);
+    }
+  },
+
+  // Generate new guest session ID
+  generateGuestSessionId: (): string => {
+    return 'guest_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+  },
+
+  // Clear guest session
+  clearGuestSession: async () => {
+    try {
+      await SecureStore.deleteItemAsync(GUEST_SESSION_KEY);
+    } catch (error) {
+      console.error('Error clearing guest session:', error);
+    }
+  },
+};
+
 // Request interceptor - Add auth token and security headers
 api.interceptors.request.use(
   async (config) => {
@@ -116,6 +168,15 @@ api.interceptors.request.use(
       const token = await SecurityUtils.getStoredToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+      } else {
+        // For guest users, add guest session ID
+        let guestSessionId = await GuestUtils.getGuestSessionId();
+        if (!guestSessionId) {
+          guestSessionId = GuestUtils.generateGuestSessionId();
+          await GuestUtils.setGuestSessionId(guestSessionId);
+        }
+        config.headers['Guest-Session'] = guestSessionId;
+        console.log('🔐 Adding Guest-Session header:', guestSessionId);
       }
 
       // Add security headers for sensitive operations
@@ -307,6 +368,53 @@ export const fashionAPI = {
   getAnalysis: (id: string) => api.get(`/reviews/${id}`),
   
   deleteAnalysis: (id: string) => api.delete(`/reviews/${id}`),
+};
+
+export const guestAPI = {
+  // Test guest session endpoint
+  testSession: () => {
+    console.log('🧪 Testing guest session...');
+    return api.get('/guest/reviews/test');
+  },
+
+  // Guest image upload with progress tracking
+  uploadImage: (imageUri: string, description?: string, onProgress?: (progress: number) => void) => {
+    const formData = new FormData();
+    formData.append('image', {
+      uri: imageUri,
+      type: 'image/jpeg',
+      name: 'outfit.jpg',
+    } as any);
+    
+    if (description) {
+      formData.append('description', description);
+    }
+
+    return api.post('/guest/reviews', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(progress);
+        }
+      },
+      timeout: 60000, // 60 seconds for image uploads
+    });
+  },
+
+  // Get guest usage info
+  getUsage: () => api.get('/guest/reviews/usage'),
+
+  // Submit guest feedback
+  submitFeedback: (reviewId: string, feedbackData: {
+    feedbackRating?: number;
+    userFeedback?: string;
+    accepted?: boolean;
+  }) => {
+    return api.post(`/guest/reviews/${reviewId}/feedback`, feedbackData);
+  },
 };
 
 // Health check endpoint

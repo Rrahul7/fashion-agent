@@ -9,38 +9,54 @@ import {
   ActivityIndicator,
   Dimensions,
   Platform,
+  TextInput,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera } from 'lucide-react-native';
+import { Camera, Upload, X } from 'lucide-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Crypto from 'expo-crypto';
 import Toast from 'react-native-toast-message';
-import { fashionAPI } from '../../services/api';
+import { guestAPI } from '../../services/api';
 
 const { width } = Dimensions.get('window');
 
-interface AnalysisResult {
+interface OutfitAnalysis {
+  styleCategory: string;
+  styleCategoryScore: number;
+  fit: string;
+  fitScore: number;
+  colorHarmony: string;
+  colorHarmonyScore: number;
+  occasionSuitability: string;
+  occasionScore: number;
+  overallScore: number;
+  highlights: string[];
+  improvementSuggestions: string[];
+}
+
+interface GuestUsage {
+  used: number;
+  limit: number;
+  remaining: number;
+}
+
+interface ReviewResult {
   reviewId: string;
-  outfitAnalysis: {
-    styleCategory: string;
-    fit: number;
-    colorHarmony: number;
-    occasionSuitability: number;
-    highlights: string[];
-    improvementSuggestions: string[];
-  };
+  outfitAnalysis: OutfitAnalysis;
+  guestUsage?: GuestUsage;
 }
 
 interface SecureImageUploadProps {
-  onAnalysisComplete?: (result: AnalysisResult) => void;
+  onAnalysisComplete?: (result: ReviewResult) => void;
   onUploadProgress?: (progress: number) => void;
 }
 
-export default function SecureImageUpload({ 
+export function SecureImageUpload({ 
   onAnalysisComplete, 
   onUploadProgress 
 }: SecureImageUploadProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [description, setDescription] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [imageInfo, setImageInfo] = useState<any>(null);
@@ -70,20 +86,9 @@ export default function SecureImageUpload({
         return false;
       }
 
-      // Generate file hash for integrity
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-      
-      const hash = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        base64
-      );
-
       console.log('✅ Image validated:', {
         size: fileInfo.size,
         extension: fileExtension,
-        hash: hash.substring(0, 16) + '...'
       });
 
       return true;
@@ -102,16 +107,10 @@ export default function SecureImageUpload({
       if (status !== 'granted') {
         Alert.alert(
           'Camera Permission Required',
-          'Fashion Agent needs camera access to capture outfit photos for analysis. You can enable this in your device settings.',
+          'Fashion Agent needs camera access to capture outfit photos for analysis.',
           [
             { text: 'Cancel', style: 'cancel' },
-            { 
-              text: 'Settings', 
-              onPress: () => {
-                // Note: In a real app, you might want to open settings
-                console.log('Redirect to settings');
-              }
-            },
+            { text: 'OK' },
           ]
         );
         return false;
@@ -136,12 +135,7 @@ export default function SecureImageUpload({
           'Fashion Agent needs access to your photo library to analyze your outfit photos.',
           [
             { text: 'Cancel', style: 'cancel' },
-            { 
-              text: 'Settings', 
-              onPress: () => {
-                console.log('Redirect to settings');
-              }
-            },
+            { text: 'OK' },
           ]
         );
         return false;
@@ -245,106 +239,134 @@ export default function SecureImageUpload({
         onUploadProgress?.(progress);
       };
 
-      // Call secure API with progress tracking
-      const response = await fashionAPI.uploadImage(selectedImage, progressCallback);
+      // Call guest API with progress tracking
+      const response = await guestAPI.uploadImage(
+        selectedImage, 
+        description.trim() || undefined, 
+        progressCallback
+      );
       
       if (response.data) {
-        const analysisResult: AnalysisResult = response.data;
+        const analysisResult: ReviewResult = response.data;
         
         console.log('✅ Analysis completed successfully');
-        
-        // Calculate average score
-        const avgScore = Math.round((analysisResult.outfitAnalysis.fit + analysisResult.outfitAnalysis.colorHarmony + analysisResult.outfitAnalysis.occasionSuitability) / 3);
         
         Toast.show({
           type: 'success',
           text1: 'Analysis Complete!',
-          text2: `Your outfit scored ${avgScore}/10`,
+          text2: `Your outfit scored ${analysisResult.outfitAnalysis.overallScore}/100`,
           visibilityTime: 3000,
         });
 
         // Call completion callback
         onAnalysisComplete?.(analysisResult);
         
-        // Clear the selected image for next use
-        setSelectedImage(null);
-        setImageInfo(null);
-        setUploadProgress(0);
+        // Clear the form
+        clearForm();
       }
     } catch (error: any) {
       console.error('❌ Analysis failed:', error);
       
-      const errorMessage = error.response?.data?.message || 
-                          error.message || 
-                          'Analysis failed. Please try again.';
+      const errorData = error.response?.data;
       
-      Toast.show({
-        type: 'error',
-        text1: 'Analysis Failed',
-        text2: errorMessage,
-      });
-      
-      Alert.alert('Analysis Failed', errorMessage);
+      if (errorData?.code === 'LIMIT_REACHED') {
+        Toast.show({
+          type: 'error',
+          text1: 'Review Limit Reached',
+          text2: errorData.message,
+        });
+        Alert.alert('Review Limit Reached', errorData.message);
+      } else {
+        const errorMessage = errorData?.error || 
+                            error.message || 
+                            'Analysis failed. Please try again.';
+        
+        Toast.show({
+          type: 'error',
+          text1: 'Analysis Failed',
+          text2: errorMessage,
+        });
+      }
     } finally {
       setAnalyzing(false);
       setUploadProgress(0);
     }
   };
 
+  // Clear form
+  const clearForm = () => {
+    setSelectedImage(null);
+    setDescription('');
+    setImageInfo(null);
+    setUploadProgress(0);
+  };
+
   // Clear selected image
   const clearImage = () => {
-    Alert.alert(
-      'Clear Image',
-      'Are you sure you want to remove the selected image?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Clear', 
-          style: 'destructive',
-          onPress: () => {
-            setSelectedImage(null);
-            setImageInfo(null);
-            setUploadProgress(0);
-          }
-        },
-      ]
-    );
+    setSelectedImage(null);
+    setImageInfo(null);
+    setUploadProgress(0);
   };
+
+  if (!selectedImage) {
+    return (
+      <View style={styles.container}>
+        {/* Upload Area */}
+        <View style={styles.uploadArea}>
+          <Camera size={48} color="#9CA3AF" />
+          <Text style={styles.uploadTitle}>Upload Your Outfit</Text>
+          <Text style={styles.uploadSubtext}>Drag & drop or click to browse</Text>
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={pickImageFromLibrary}
+            disabled={analyzing}
+          >
+            <Upload size={20} color="white" />
+            <Text style={styles.buttonText}>Choose Photo</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={takePhoto}
+            disabled={analyzing}
+          >
+            <Camera size={20} color="white" />
+            <Text style={styles.buttonText}>Take Photo</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      {/* Image Display Area */}
-      <View style={styles.imageContainer}>
-        {selectedImage ? (
-          <View style={styles.imageWrapper}>
-            <Image source={{ uri: selectedImage }} style={styles.image} />
-            <TouchableOpacity 
-              style={styles.clearButton} 
-              onPress={clearImage}
-              accessibilityLabel="Clear selected image"
-            >
-              <Text style={styles.clearButtonText}>×</Text>
-            </TouchableOpacity>
-            
-            {/* Image Info */}
-            {imageInfo && (
-              <View style={styles.imageInfoContainer}>
-                <Text style={styles.imageInfoText}>
-                  {Math.round(imageInfo.width)}×{Math.round(imageInfo.height)}
-                  {imageInfo.fileSize && ` • ${Math.round(imageInfo.fileSize / 1024)}KB`}
-                </Text>
-              </View>
-            )}
-          </View>
-        ) : (
-          <View style={styles.placeholder}>
-            <Camera size={48} color="#666" />
-            <Text style={styles.placeholderText}>Select or capture outfit photo</Text>
-            <Text style={styles.placeholderSubtext}>
-              Upload a clear photo of your outfit for AI analysis
-            </Text>
-          </View>
-        )}
+      {/* Image Preview */}
+      <View style={styles.imagePreview}>
+        <Image source={{ uri: selectedImage }} style={styles.image} />
+        <TouchableOpacity 
+          style={styles.clearButton} 
+          onPress={clearImage}
+        >
+          <X size={16} color="white" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Description Input */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Tell us about this outfit (optional)</Text>
+        <TextInput
+          style={styles.textInput}
+          value={description}
+          onChangeText={setDescription}
+          placeholder="Special occasion, style goals, or anything else you'd like our AI to consider..."
+          multiline
+          numberOfLines={4}
+          textAlignVertical="top"
+        />
       </View>
 
       {/* Upload Progress */}
@@ -358,218 +380,152 @@ export default function SecureImageUpload({
               ]} 
             />
           </View>
-          <Text style={styles.progressText}>{uploadProgress}% uploaded</Text>
+          <Text style={styles.progressText}>Analyzing your style... {uploadProgress}%</Text>
         </View>
       )}
 
-      {/* Action Buttons */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={pickImageFromLibrary}
-          disabled={analyzing}
-          accessibilityLabel="Choose photo from library"
-        >
-          <Text style={styles.buttonText}>📸 Choose Photo</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={takePhoto}
-          disabled={analyzing}
-          accessibilityLabel="Take photo with camera"
-        >
-          <Text style={styles.buttonText}>📷 Take Photo</Text>
-        </TouchableOpacity>
-      </View>
-
       {/* Analyze Button */}
-      {selectedImage && (
-        <TouchableOpacity
-          style={[styles.analyzeButton, analyzing && styles.disabledButton]}
-          onPress={analyzeOutfit}
-          disabled={analyzing}
-          accessibilityLabel="Analyze outfit with AI"
-        >
-          {analyzing ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="white" />
-              <Text style={styles.loadingText}>
-                {uploadProgress > 0 ? 'Uploading...' : 'Analyzing...'}
-              </Text>
-            </View>
-          ) : (
-            <Text style={styles.analyzeButtonText}>✨ Analyze My Outfit</Text>
-          )}
-        </TouchableOpacity>
-      )}
-
-      {/* Security Notice */}
-      <View style={styles.securityNotice}>
-        <Text style={styles.securityText}>
-          🔒 Your photos are securely processed and not stored permanently
-        </Text>
-      </View>
+      <TouchableOpacity
+        style={[styles.analyzeButton, analyzing && styles.disabledButton]}
+        onPress={analyzeOutfit}
+        disabled={analyzing}
+      >
+        {analyzing ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="white" />
+            <Text style={styles.loadingText}>
+              {uploadProgress > 0 ? 'Uploading...' : 'Analyzing...'}
+            </Text>
+          </View>
+        ) : (
+          <>
+            <Text style={styles.analyzeButtonText}>Get My Style Analysis</Text>
+          </>
+        )}
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#f8f9fa',
+    gap: 20,
   },
-  imageContainer: {
-    height: width * 0.75, // 4:3 aspect ratio
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 20,
-    backgroundColor: '#fff',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
-  },
-  imageWrapper: {
-    flex: 1,
-    position: 'relative',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  clearButton: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
+  uploadArea: {
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#D1D5DB',
+    borderRadius: 16,
+    padding: 48,
     alignItems: 'center',
+    backgroundColor: '#FAFAFA',
   },
-  clearButtonText: {
-    color: 'white',
+  uploadTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-  },
-  imageInfoContainer: {
-    position: 'absolute',
-    bottom: 10,
-    left: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  imageInfoText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  placeholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  placeholderText: {
-    marginTop: 16,
-    color: '#333',
-    fontSize: 18,
     fontWeight: '600',
+    color: '#111827',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  uploadSubtext: {
+    fontSize: 16,
+    color: '#6B7280',
     textAlign: 'center',
-  },
-  placeholderSubtext: {
-    marginTop: 8,
-    color: '#666',
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  progressContainer: {
-    marginBottom: 20,
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: '#e9ecef',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#007AFF',
-  },
-  progressText: {
-    textAlign: 'center',
-    marginTop: 8,
-    color: '#666',
-    fontSize: 12,
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
     gap: 12,
   },
   button: {
     flex: 1,
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: '#4F46E5',
+    flexDirection: 'row',
     alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#007AFF',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    gap: 8,
   },
   buttonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },
+  imagePreview: {
+    position: 'relative',
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#F3F4F6',
+  },
+  image: {
+    width: '100%',
+    height: 200,
+    resizeMode: 'cover',
+  },
+  clearButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  inputContainer: {
+    gap: 8,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: '#111827',
+    backgroundColor: 'white',
+    minHeight: 100,
+  },
+  progressContainer: {
+    gap: 8,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#4F46E5',
+    borderRadius: 2,
+  },
+  progressText: {
+    textAlign: 'center',
+    color: '#6B7280',
+    fontSize: 14,
+  },
   analyzeButton: {
-    backgroundColor: '#28a745',
-    padding: 18,
+    backgroundColor: '#4F46E5',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 16,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#28a745',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    justifyContent: 'center',
   },
   disabledButton: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#9CA3AF',
   },
   analyzeButtonText: {
     color: 'white',
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   loadingContainer: {
     flexDirection: 'row',
@@ -580,17 +536,5 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
-  },
-  securityNotice: {
-    backgroundColor: '#e8f5e8',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  securityText: {
-    color: '#2d5016',
-    fontSize: 12,
-    textAlign: 'center',
-    fontWeight: '500',
   },
 });

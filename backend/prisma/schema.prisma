@@ -38,27 +38,55 @@ model Profile {
 
 model Review {
   id                    String            @id @default(cuid())
-  userId                String
-  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                String?           // Optional for guest reviews
+  user                  User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestSessionId        String?           // For guest users
   imageUrl              String
   imagePublicId         String?           // Cloudinary public ID for image management
   description           String?
   
-  // Outfit Analysis
+  // Outfit Analysis with scores (0-100)
   styleCategory         String?
+  styleCategoryScore    Int?
   fit                   String?
+  fitScore              Int?
   colorHarmony          String?
+  colorHarmonyScore     Int?
   occasionSuitability   String?
+  occasionScore         Int?
+  overallScore          Int?
   highlights            String[]
   improvementSuggestions String[]
+  
+  // Enhanced feedback storage
+  userFeedback          String?           // User's detailed feedback
+  feedbackRating        Int?              // 1-5 star rating
+  accepted              Boolean?
   
   // Comparison data
   comparedWithIds       String[]
   comparisonInsight     String?
   
-  accepted              Boolean?
+  // Guest tracking
+  isGuest               Boolean           @default(false)
   createdAt             DateTime          @default(now())
 
   @@map("reviews")
   @@index([userId, createdAt])
+  @@index([guestSessionId, createdAt])
+}
+
+// Track guest sessions and their usage limits
+model GuestSession {
+  id              String            @id @default(cuid())
+  sessionId       String            @unique
+  reviewCount     Int               @default(0)
+  ipAddress       String?
+  userAgent       String?
+  lastUsedAt      DateTime          @default(now())
+  createdAt       DateTime          @default(now())
+
+  @@map("guest_sessions")
+  @@index([sessionId])
+  @@index([createdAt])
 }

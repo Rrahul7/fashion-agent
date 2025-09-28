@@ -2,10 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 import { config } from './config/config';
 import { authRoutes } from './routes/auth';
 import { profileRoutes } from './routes/profile';
 import { reviewRoutes } from './routes/reviews';
+import { guestReviewRoutes } from './routes/guestReviews';
 import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { 
@@ -118,6 +120,7 @@ app.use('/api/reviews', uploadLimiter);
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
 
 // Mobile security and logging middleware
 app.use(securityLogger);
@@ -133,6 +136,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/guest/reviews', guestReviewRoutes);
 
 // Error handling middleware (must be last)
 app.use(notFoundHandler);

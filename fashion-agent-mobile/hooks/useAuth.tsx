@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         Toast.show({
           type: 'success',
           text1: 'Welcome back!',
-          text2: `Hello, ${response.data.name}`,
+          text2: response.data.name ? `Hello, ${response.data.name}!` : 'Hello!',
           visibilityTime: 2000,
         });
       } else {
@@ -141,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       Toast.show({
         type: 'success',
         text1: 'Login Successful',
-        text2: `Welcome back, ${userData.name}!`,
+        text2: userData.name ? `Welcome back, ${userData.name}!` : 'Welcome back!',
       });
 
       // Optional: Store additional user preferences
@@ -224,7 +224,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       Toast.show({
         type: 'success',
         text1: 'Registration Successful',
-        text2: `Welcome to Fashion Agent, ${newUser.name}!`,
+        text2: newUser.name ? `Welcome to Fashion Agent, ${newUser.name}!` : 'Welcome to Fashion Agent!',
       });
 
       // Store user preferences

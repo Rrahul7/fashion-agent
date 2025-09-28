@@ -9,22 +9,22 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "react": "^18",
-    "react-dom": "^18",
-    "next": "14.0.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "typescript": "^5",
-    "tailwindcss": "^3.3.0",
     "autoprefixer": "^10.0.1",
-    "postcss": "^8",
-    "lucide-react": "^0.292.0",
     "axios": "^1.5.0",
-    "react-hook-form": "^7.47.0",
-    "react-hot-toast": "^2.4.1",
     "js-cookie": "^3.0.5",
-    "react-dropzone": "^14.2.3"
+    "lucide-react": "^0.292.0",
+    "next": "14.0.0",
+    "postcss": "^8",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-dropzone": "^14.3.8",
+    "react-hook-form": "^7.47.0",
+    "react-hot-toast": "^2.6.0",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5"
   },
   "devDependencies": {
     "@types/js-cookie": "^3.0.4",
