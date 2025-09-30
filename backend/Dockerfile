@@ -1,6 +1,9 @@
 # Use Node.js 22 Alpine image
 FROM node:22-alpine
 
+# Install OpenSSL for Prisma compatibility and curl for health check
+RUN apk add --no-cache openssl1.1-compat curl
+
 # Set working directory
 WORKDIR /app
 
