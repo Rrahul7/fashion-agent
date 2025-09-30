@@ -33,8 +33,8 @@ RUN npm prune --production
 EXPOSE 5000
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
+RUN groupadd -g 1001 nodejs
+RUN useradd -r -u 1001 -g nodejs nodejs
 USER nodejs
 
 # Health check
