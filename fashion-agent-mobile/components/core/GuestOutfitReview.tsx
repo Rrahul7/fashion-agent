@@ -262,7 +262,7 @@ export function GuestOutfitReview() {
     return (
       <SafeAreaView style={styles.container}>
         <LinearGradient
-          colors={['#F5F1E8', '#EDE7DC']}
+          colors={['#0F0F23', '#1A1A2E', '#16213E']}
           style={styles.gradientBackground}
         >
           <ScrollView 
@@ -532,7 +532,7 @@ export function GuestOutfitReview() {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={['#F5F1E8', '#EDE7DC']}
+        colors={['#0F0F23', '#1A1A2E', '#16213E']}
         style={styles.gradientBackground}
       >
         <ScrollView 
@@ -551,8 +551,8 @@ export function GuestOutfitReview() {
                 accentColor="#E6B800"
               />
             </View>
-            <Text style={styles.headerMainTitle}>Drip AI Expert</Text>
-            <Text style={styles.headerMainSubtitle}>Get instant outfit analysis from your AI stylist</Text>
+            <Text style={styles.headerMainTitle}>👑 Fashion Agent</Text>
+            <Text style={styles.headerMainSubtitle}>✨ Premium AI Style Expert ✨</Text>
             
             {/* Guest Usage Indicator */}
             <View style={styles.usageIndicatorMain}>
@@ -627,40 +627,48 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#FFD700',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: '#FFD700',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 8,
+    borderWidth: 2,
+    borderColor: '#FFA500',
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#111827',
+    color: '#FFD700',
     marginBottom: 8,
     textAlign: 'center',
+    textShadowColor: 'rgba(255, 215, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#E5E7EB',
     textAlign: 'center',
     marginBottom: 16,
   },
   headerMainTitle: {
     fontSize: 32,
-    fontWeight: '700',
-    color: '#111827',
+    fontWeight: '800',
+    color: '#FFD700',
     marginBottom: 8,
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    textShadowColor: 'rgba(255, 215, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   headerMainSubtitle: {
     fontSize: 18,
-    color: '#6B7280',
+    color: '#E5E7EB',
     textAlign: 'center',
     marginBottom: 24,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
@@ -724,7 +732,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   scoreCard: {
-    backgroundColor: 'white',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     marginHorizontal: 20,
     borderRadius: 20,
     padding: 24,
@@ -732,46 +740,53 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
   },
   scoreCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#FFD700',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-    shadowColor: '#1F2937',
+    shadowColor: '#FFD700',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.4,
     shadowRadius: 8,
     elevation: 6,
+    borderWidth: 2,
+    borderColor: '#FFA500',
   },
   scoreGrade: {
     fontSize: 28,
     fontWeight: '700',
-    color: 'white',
+    color: '#0F0F23',
   },
   overallScoreTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFD700',
     marginBottom: 8,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   overallScoreValue: {
     fontSize: 36,
     fontWeight: '700',
-    color: '#111827',
+    color: '#FFFFFF',
     marginBottom: 8,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   overallScoreSubtext: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#D1D5DB',
     textAlign: 'center',
   },
   tilesContainer: {
@@ -785,17 +800,19 @@ const styles = StyleSheet.create({
   },
   tile: {
     flex: 1,
-    backgroundColor: '#2D2D2D',
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
     borderRadius: 20,
     padding: 20,
     marginHorizontal: 6,
     minHeight: 140,
     justifyContent: 'space-between',
-    shadowColor: '#000',
+    shadowColor: '#FFD700',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
   },
   tileIconContainer: {
     width: 40,
@@ -835,16 +852,18 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   card: {
-    backgroundColor: 'white',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     marginHorizontal: 20,
     borderRadius: 20,
     padding: 20,
     marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -854,7 +873,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFD700',
     marginLeft: 12,
   },
   cardContent: {
@@ -875,7 +894,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     lineHeight: 24,
-    color: '#374151',
+    color: '#E5E7EB',
   },
   feedbackContent: {
     alignItems: 'center',
@@ -942,7 +961,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   primaryButton: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#FFD700',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -950,16 +969,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 16,
     gap: 8,
-    shadowColor: '#1F2937',
+    shadowColor: '#FFD700',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.4,
     shadowRadius: 8,
     elevation: 6,
+    borderWidth: 2,
+    borderColor: '#FFA500',
   },
   primaryButtonText: {
-    color: 'white',
+    color: '#0F0F23',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   upgradeCard: {
     backgroundColor: '#FFF7ED',

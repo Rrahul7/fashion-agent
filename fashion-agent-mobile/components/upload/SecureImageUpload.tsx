@@ -10,9 +10,10 @@ import {
   Dimensions,
   Platform,
   TextInput,
+  Linking,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera, Upload, X } from 'lucide-react-native';
+import { Camera, Upload, X, Settings } from 'lucide-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Crypto from 'expo-crypto';
 import Toast from 'react-native-toast-message';
@@ -107,23 +108,36 @@ export function SecureImageUpload({
     }
   };
 
+  // Open device settings
+  const openSettings = () => {
+    if (Platform.OS === 'ios') {
+      Linking.openURL('app-settings:');
+    } else {
+      Linking.openSettings();
+    }
+  };
+
   // Request camera permissions securely
   const requestCameraPermissions = async (): Promise<boolean> => {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      
+
       if (status !== 'granted') {
         Alert.alert(
-          'Camera Permission Required',
-          'Fashion Agent needs camera access to capture outfit photos for analysis.',
+          '📸 Camera Permission Required',
+          'Fashion Agent needs camera access to capture outfit photos for analysis. Please enable camera permissions in your device settings.',
           [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'OK' },
+            {
+              text: 'Open Settings',
+              onPress: openSettings,
+              style: 'default'
+            },
           ]
         );
         return false;
       }
-      
+
       return true;
     } catch (error) {
       console.error('Camera permission error:', error);
@@ -132,23 +146,27 @@ export function SecureImageUpload({
     }
   };
 
-  // Request media library permissions securely  
+  // Request media library permissions securely
   const requestMediaLibraryPermissions = async (): Promise<boolean> => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
+
       if (status !== 'granted') {
         Alert.alert(
-          'Photo Library Permission Required',
-          'Fashion Agent needs access to your photo library to analyze your outfit photos.',
+          '📱 Photo Library Permission Required',
+          'Fashion Agent needs access to your photo library to analyze your outfit photos. Please enable photo library permissions in your device settings.',
           [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'OK' },
+            {
+              text: 'Open Settings',
+              onPress: openSettings,
+              style: 'default'
+            },
           ]
         );
         return false;
       }
-      
+
       return true;
     } catch (error) {
       console.error('Media library permission error:', error);
@@ -333,9 +351,9 @@ export function SecureImageUpload({
       <View style={styles.container}>
         {/* Upload Area */}
         <View style={styles.uploadArea}>
-          <Camera size={48} color="#1F2937" />
-          <Text style={styles.uploadTitle}>Upload Your Outfit</Text>
-          <Text style={styles.uploadSubtext}>Drag & drop or click to browse</Text>
+          <Camera size={48} color="#FFD700" />
+          <Text style={styles.uploadTitle}>👑 Upload Your Outfit</Text>
+          <Text style={styles.uploadSubtext}>✨ Choose or capture your style ✨</Text>
         </View>
 
         {/* Action Buttons */}
@@ -434,22 +452,25 @@ const styles = StyleSheet.create({
   uploadArea: {
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#1F2937',
+    borderColor: '#FFD700',
     borderRadius: 16,
     padding: 48,
     alignItems: 'center',
-    backgroundColor: '#F5F1E8',
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
   },
   uploadTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontWeight: '700',
+    color: '#FFD700',
     marginTop: 16,
     marginBottom: 8,
+    textShadowColor: 'rgba(255, 215, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   uploadSubtext: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#E5E7EB',
     textAlign: 'center',
   },
   buttonContainer: {
@@ -458,7 +479,7 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#FFD700',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -466,16 +487,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     borderRadius: 12,
     gap: 8,
-    shadowColor: '#1F2937',
+    shadowColor: '#FFD700',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.4,
     shadowRadius: 6,
     elevation: 4,
+    borderWidth: 1,
+    borderColor: '#FFA500',
   },
   buttonText: {
-    color: 'white',
+    color: '#0F0F23',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   imagePreview: {
     position: 'relative',
@@ -505,16 +528,16 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFD700',
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: 'rgba(255, 215, 0, 0.3)',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: '#111827',
-    backgroundColor: 'white',
+    color: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     minHeight: 100,
   },
   progressContainer: {
@@ -537,20 +560,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   analyzeButton: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#FFD700',
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFA500',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
   },
   disabledButton: {
     backgroundColor: '#9CA3AF',
   },
   analyzeButtonText: {
-    color: 'white',
+    color: '#0F0F23',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   loadingContainer: {
     flexDirection: 'row',

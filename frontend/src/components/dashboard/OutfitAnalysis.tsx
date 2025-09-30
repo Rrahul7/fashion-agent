@@ -185,88 +185,152 @@ export function OutfitAnalysis({ result, imageUrl, onStartOver }: OutfitAnalysis
   }
 
   return (
-    <div className="space-y-6 animate-slide-up">
-      {/* Header */}
+    <div className="space-y-8 animate-luxury-fade">
+      {/* Premium Header */}
       <div className="text-center">
-        <div className="flex justify-center mb-4">
-          <div className="bg-gradient-to-br from-purple-600 to-pink-600 p-3 rounded-full">
-            <Sparkles className="w-8 h-8 text-white" />
+        <div className="flex justify-center mb-6">
+          <div className="relative">
+            <div className="w-20 h-20 rounded-3xl gradient-gold-luxury flex items-center justify-center shadow-glow-gold">
+              <Sparkles className="w-10 h-10 text-white animate-pulse-slow" />
+            </div>
+            <div className="absolute -top-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center animate-bounce-subtle">
+              <span className="text-white text-xs font-bold">✓</span>
+            </div>
           </div>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Expert Analysis Complete!</h2>
-        <p className="text-gray-600">Professional fashion insights with expert-level scoring</p>
+        <h2 className="text-4xl font-bold text-gradient-luxury mb-4">Analysis Complete!</h2>
+        <p className="text-xl text-luxury-600 font-medium">Premium fashion insights with expert-level precision</p>
       </div>
 
-      {/* Overall Score */}
-      <div className="bg-gradient-to-r from-gray-900 to-gray-700 rounded-xl p-6 text-center text-white">
-        <div className="text-4xl font-bold mb-2">{convertScore(outfitAnalysis.overallScore)}/10</div>
-        <div className="text-gray-300">Overall Fashion Score</div>
+      {/* Premium Overall Score */}
+      <div className="card-luxury text-center relative overflow-hidden">
+        <div className="absolute inset-0 gradient-gold-luxury opacity-10"></div>
+        <div className="relative z-10">
+          <div className="text-6xl font-bold text-gradient-gold mb-3">
+            {convertScore(outfitAnalysis.overallScore)}/10
+          </div>
+          <div className="text-luxury-600 text-lg font-semibold">Overall Fashion Score</div>
+          <div className="mt-4 flex justify-center">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={`w-6 h-6 mx-1 ${
+                  i < Math.floor(convertScore(outfitAnalysis.overallScore) / 2)
+                    ? 'text-gold-500 fill-current'
+                    : 'text-luxury-300'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Image Preview */}
+      {/* Premium Image Preview */}
       {imageUrl && (
-        <div className="rounded-xl overflow-hidden bg-gray-100 shadow-lg">
-          <img 
-            src={imageUrl} 
-            alt="Analyzed outfit" 
-            className="w-full h-56 object-cover"
-          />
+        <div className="card-luxury overflow-hidden">
+          <div className="relative rounded-2xl overflow-hidden">
+            <img
+              src={imageUrl}
+              alt="Analyzed outfit"
+              className="w-full h-64 object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+            <div className="absolute bottom-4 left-4 bg-white/20 backdrop-blur-sm text-white px-3 py-2 rounded-xl">
+              <span className="text-sm font-medium">Analyzed Outfit</span>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Expert Analysis Tiles - Core Assessments */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Core Assessments</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className={`bg-white border-2 rounded-lg p-4 ${getScoreColor(outfitAnalysis.styleCategoryScore)}`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <Shirt className="w-5 h-5 text-gray-600 mr-2" />
-                <span className="text-sm font-medium text-gray-600">Style Category</span>
+      {/* Premium Core Assessments */}
+      <div className="animate-luxury-slide">
+        <h3 className="text-2xl font-bold text-gradient-luxury mb-6">Core Assessments</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="card-glass relative overflow-hidden group hover:scale-105 transition-all duration-300">
+            <div className="absolute inset-0 gradient-rose-luxury opacity-10 group-hover:opacity-20 transition-opacity duration-300"></div>
+            <div className="relative z-10 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-rose-500 flex items-center justify-center">
+                    <Shirt className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-lg font-semibold text-luxury-900">Style Category</span>
+                </div>
+                <div className="text-3xl font-bold text-gradient-rose">
+                  {convertScore(outfitAnalysis.styleCategoryScore)}/10
+                </div>
               </div>
-              <div className="text-xl font-bold">{convertScore(outfitAnalysis.styleCategoryScore)}/10</div>
-            </div>
-            <div className={`px-2 py-1 rounded text-sm font-medium capitalize ${getScoreLabel(outfitAnalysis.styleCategory)}`}>
-              {outfitAnalysis.styleCategory}
+              <div className="bg-white/30 backdrop-blur-sm px-4 py-2 rounded-xl">
+                <span className="text-luxury-900 font-semibold capitalize">
+                  {outfitAnalysis.styleCategory}
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className={`bg-white border-2 rounded-lg p-4 ${getScoreColor(outfitAnalysis.fitScore)}`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <Target className="w-5 h-5 text-gray-600 mr-2" />
-                <span className="text-sm font-medium text-gray-600">Technical Fit</span>
+          <div className="card-glass relative overflow-hidden group hover:scale-105 transition-all duration-300">
+            <div className="absolute inset-0 gradient-luxury-dark opacity-10 group-hover:opacity-20 transition-opacity duration-300"></div>
+            <div className="relative z-10 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center">
+                    <Target className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-lg font-semibold text-luxury-900">Technical Fit</span>
+                </div>
+                <div className="text-3xl font-bold text-gradient-luxury">
+                  {convertScore(outfitAnalysis.fitScore)}/10
+                </div>
               </div>
-              <div className="text-xl font-bold">{convertScore(outfitAnalysis.fitScore)}/10</div>
-            </div>
-            <div className={`px-2 py-1 rounded text-sm font-medium capitalize ${getScoreLabel(outfitAnalysis.fit)}`}>
-              {outfitAnalysis.fit}
+              <div className="bg-white/30 backdrop-blur-sm px-4 py-2 rounded-xl">
+                <span className="text-luxury-900 font-semibold capitalize">
+                  {outfitAnalysis.fit}
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className={`bg-white border-2 rounded-lg p-4 ${getScoreColor(outfitAnalysis.colorHarmonyScore)}`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <Palette className="w-5 h-5 text-gray-600 mr-2" />
-                <span className="text-sm font-medium text-gray-600">Color Theory</span>
+          <div className="card-glass relative overflow-hidden group hover:scale-105 transition-all duration-300">
+            <div className="absolute inset-0 gradient-gold-luxury opacity-10 group-hover:opacity-20 transition-opacity duration-300"></div>
+            <div className="relative z-10 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500 flex items-center justify-center">
+                    <Palette className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-lg font-semibold text-luxury-900">Color Theory</span>
+                </div>
+                <div className="text-3xl font-bold text-gradient-gold">
+                  {convertScore(outfitAnalysis.colorHarmonyScore)}/10
+                </div>
               </div>
-              <div className="text-xl font-bold">{convertScore(outfitAnalysis.colorHarmonyScore)}/10</div>
-            </div>
-            <div className={`px-2 py-1 rounded text-sm font-medium capitalize ${getScoreLabel(outfitAnalysis.colorHarmony)}`}>
-              {outfitAnalysis.colorHarmony}
+              <div className="bg-white/30 backdrop-blur-sm px-4 py-2 rounded-xl">
+                <span className="text-luxury-900 font-semibold capitalize">
+                  {outfitAnalysis.colorHarmony}
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className={`bg-white border-2 rounded-lg p-4 ${getScoreColor(outfitAnalysis.occasionScore)}`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <Star className="w-5 h-5 text-gray-600 mr-2" />
-                <span className="text-sm font-medium text-gray-600">Occasion</span>
+          <div className="card-glass relative overflow-hidden group hover:scale-105 transition-all duration-300">
+            <div className="absolute inset-0 gradient-rose-luxury opacity-10 group-hover:opacity-20 transition-opacity duration-300"></div>
+            <div className="relative z-10 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center">
+                    <Star className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-lg font-semibold text-luxury-900">Occasion</span>
+                </div>
+                <div className="text-3xl font-bold text-gradient-rose">
+                  {convertScore(outfitAnalysis.occasionScore)}/10
+                </div>
               </div>
-              <div className="text-xl font-bold">{convertScore(outfitAnalysis.occasionScore)}/10</div>
-            </div>
-            <div className={`px-2 py-1 rounded text-sm font-medium capitalize ${getScoreLabel(outfitAnalysis.occasionSuitability)}`}>
-              {outfitAnalysis.occasionSuitability}
+              <div className="bg-white/30 backdrop-blur-sm px-4 py-2 rounded-xl">
+                <span className="text-luxury-900 font-semibold capitalize">
+                  {outfitAnalysis.occasionSuitability}
+                </span>
+              </div>
             </div>
           </div>
         </div>

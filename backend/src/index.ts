@@ -16,7 +16,7 @@ import {
   securityLogger, 
   sanitizeInput 
 } from './middleware/mobileSecurityMiddleware';
-import { swaggerSpec, swaggerUi, swaggerOptions } from './config/swagger';
+// import { swaggerSpec, swaggerUi, swaggerOptions } from './config/swagger';
 
 const app = express();
 
@@ -174,12 +174,12 @@ app.get('/health', (req, res) => {
 });
 
 // API Documentation
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerOptions));
+// app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerOptions));
 
 // API Schema endpoint
-app.get('/api/schema', (req, res) => {
-  res.json(swaggerSpec);
-});
+// app.get('/api/schema', (req, res) => {
+//   res.json(swaggerSpec);
+// });
 
 // API Routes
 app.use('/api/auth', authRoutes);

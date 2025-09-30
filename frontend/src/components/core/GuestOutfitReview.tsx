@@ -464,62 +464,98 @@ export function GuestOutfitReview() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center items-center mb-4">
-            <div className="bg-white shadow-lg p-4 rounded-full">
-              <Sparkles className="w-8 h-8 text-indigo-600" />
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Premium Background */}
+      <div className="absolute inset-0 gradient-mesh-luxury"></div>
+
+      <div className="max-w-4xl mx-auto px-4 py-8 relative z-10">
+        {/* Premium Header */}
+        <div className="text-center mb-12 animate-luxury-fade">
+          <div className="flex justify-center items-center mb-6">
+            <div className="relative">
+              <div className="w-20 h-20 rounded-3xl gradient-gold-luxury flex items-center justify-center shadow-glow-gold">
+                <Sparkles className="w-10 h-10 text-white animate-pulse-slow" />
+              </div>
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-rose-500 rounded-full flex items-center justify-center animate-bounce-subtle">
+                <span className="text-white text-xs font-bold">AI</span>
+              </div>
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">AI Fashion Expert</h1>
-          <p className="text-xl text-gray-600 mb-6">Get instant outfit analysis from our AI stylist</p>
-          
-          {/* Guest Usage Indicator */}
-          <div className="inline-flex items-center bg-white border border-gray-200 rounded-full px-6 py-3 shadow-sm">
+
+          <div className="space-y-4">
+            <h1 className="text-5xl font-bold text-gradient-luxury">Fashion Agent</h1>
+            <p className="text-xl text-luxury-600 font-medium max-w-2xl mx-auto leading-relaxed">
+              Experience premium AI-powered style analysis with luxury insights
+            </p>
+          </div>
+
+          {/* Premium Usage Indicator */}
+          <div className="mt-8 inline-flex items-center card-glass px-6 py-3 rounded-2xl">
             <div className="flex items-center space-x-4">
-              <span className="text-gray-600">Free Reviews:</span>
-              <div className="flex space-x-1">
+              <span className="text-luxury-700 font-medium">Premium Analyses:</span>
+              <div className="flex space-x-2">
                 {[...Array(3)].map((_, i) => (
                   <div
                     key={i}
-                    className={`w-3 h-3 rounded-full ${
-                      i < guestUsage.used ? 'bg-indigo-600' : 'bg-gray-200'
+                    className={`w-4 h-4 rounded-full transition-all duration-300 ${
+                      i < guestUsage.used
+                        ? 'bg-gradient-to-r from-gold-400 to-gold-600 shadow-glow-gold'
+                        : 'bg-white/30 backdrop-blur-sm'
                     }`}
                   />
                 ))}
               </div>
-              <span className="font-semibold text-indigo-600">{guestUsage.remaining} left</span>
+              <span className="font-bold text-gradient-gold">{guestUsage.remaining} remaining</span>
             </div>
           </div>
         </div>
 
-        {/* Upload Section */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+        {/* Premium Upload Section */}
+        <div className="card-luxury mb-12 animate-luxury-scale">
           {!selectedImage ? (
             <div
               {...getRootProps()}
-              className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all ${
-                isDragActive 
-                  ? 'border-indigo-400 bg-indigo-50' 
-                  : 'border-gray-300 hover:border-indigo-300 hover:bg-gray-50'
+              className={`relative overflow-hidden rounded-3xl p-16 text-center cursor-pointer transition-all duration-500 group ${
+                isDragActive
+                  ? 'scale-105 shadow-luxury-lg'
+                  : 'hover:scale-102 hover:shadow-luxury-lg'
               }`}
             >
               <input {...getInputProps()} />
-              <Camera className="w-16 h-16 text-gray-400 mx-auto mb-6" />
-              {isDragActive ? (
-                <p className="text-xl text-indigo-700 font-medium">Drop your outfit photo here</p>
-              ) : (
-                <>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-3">Upload Your Outfit</h2>
-                  <p className="text-gray-600 text-lg mb-6">Drag & drop or click to browse</p>
-                  <div className="inline-flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors">
-                    <Upload className="w-5 h-5 mr-2" />
-                    Choose Photo
+
+              {/* Animated Background */}
+              <div className="absolute inset-0 gradient-mesh-luxury opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
+
+              {/* Content */}
+              <div className="relative z-10">
+                <div className="mb-8">
+                  <div className={`w-20 h-20 mx-auto rounded-3xl flex items-center justify-center transition-all duration-300 ${
+                    isDragActive
+                      ? 'bg-gold-500 scale-110 shadow-glow-gold'
+                      : 'bg-white/20 backdrop-blur-sm group-hover:bg-gold-500 group-hover:scale-110 group-hover:shadow-glow-gold'
+                  }`}>
+                    <Camera className={`w-10 h-10 transition-colors duration-300 ${
+                      isDragActive ? 'text-white' : 'text-luxury-700 group-hover:text-white'
+                    }`} />
                   </div>
-                </>
-              )}
+                </div>
+
+                {isDragActive ? (
+                  <div className="animate-luxury-scale">
+                    <h3 className="text-3xl font-bold text-luxury-900 mb-3">Perfect! Drop it here</h3>
+                    <p className="text-xl text-luxury-600 font-medium">Your premium analysis awaits</p>
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="text-3xl font-bold text-luxury-900 mb-4">Upload Your Outfit</h3>
+                    <p className="text-xl text-luxury-600 font-medium mb-8">Experience luxury fashion analysis with AI precision</p>
+                    <div className="inline-flex items-center btn-gold group-hover:scale-105 transition-transform duration-300">
+                      <Upload className="w-6 h-6 mr-3" />
+                      <span className="font-bold text-lg">Choose Photo</span>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           ) : (
             <div className="space-y-6">

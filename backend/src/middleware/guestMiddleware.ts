@@ -43,7 +43,7 @@ export async function guestTrackingMiddleware(req: GuestRequest, res: Response, 
         try {
           const deviceRecord = await prisma.guestDevice.upsert({
             where: { deviceId: deviceId },
-            update: { 
+            update: {
               lastUsedAt: new Date(),
               ipAddress: req.ip,
               userAgent: req.get('User-Agent'),
@@ -99,14 +99,14 @@ export async function guestTrackingMiddleware(req: GuestRequest, res: Response, 
         try {
           const guestSession = await prisma.guestDevice.upsert({
             where: { deviceId: guestSessionId },
-            update: { 
+            update: {
               lastUsedAt: new Date(),
               ipAddress: req.ip,
               userAgent: req.get('User-Agent'),
             },
             create: {
               deviceId: guestSessionId,
-              deviceFingerprint: guestSessionId, // Use sessionId as fingerprint for legacy
+              deviceFingerprint: 'legacy-session',
               reviewCount: 0,
               ipAddress: req.ip,
               userAgent: req.get('User-Agent'),

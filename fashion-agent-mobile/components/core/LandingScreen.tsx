@@ -63,7 +63,7 @@ export function LandingScreen({ onAnimationComplete }: LandingScreenProps) {
       ]}
     >
       <LinearGradient
-        colors={['#F5F1E8', '#EDE7DC', '#E6DDD1']}
+        colors={['#0F0F23', '#1A1A2E', '#16213E']}
         style={styles.gradient}
       >
         <SafeAreaView style={styles.safeArea}>
@@ -81,18 +81,18 @@ export function LandingScreen({ onAnimationComplete }: LandingScreenProps) {
               ]}
             >
               <View style={styles.logoCircle}>
-                <DripLogo 
-                  size={56} 
+                <DripLogo
+                  size={56}
                   backgroundColor="transparent"
-                  primaryColor="#F5D03A"
-                  secondaryColor="#FBBF24"
+                  primaryColor="#FFD700"
+                  secondaryColor="#FFA500"
                   accentColor="#FFFFFF"
                 />
               </View>
-              
+
               {/* App Name */}
-              <Text style={styles.appName}>Drip</Text>
-              <Text style={styles.tagline}>Your AI Style Expert</Text>
+              <Text style={styles.appName}>Fashion Agent</Text>
+              <Text style={styles.tagline}>✨ Premium AI Style Expert ✨</Text>
             </Animated.View>
 
             {/* Bottom tagline */}
@@ -105,7 +105,7 @@ export function LandingScreen({ onAnimationComplete }: LandingScreenProps) {
                 }
               ]}
             >
-              <Text style={styles.welcomeText}>Get ready to elevate your style</Text>
+              <Text style={styles.welcomeText}>🏆 Experience Luxury Fashion Analysis 🏆</Text>
             </Animated.View>
           </View>
         </SafeAreaView>
@@ -143,30 +143,36 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#FFD700',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
-    shadowColor: '#1F2937',
+    shadowColor: '#FFD700',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.4,
     shadowRadius: 20,
     elevation: 12,
+    borderWidth: 2,
+    borderColor: '#FFA500',
   },
   appName: {
-    fontSize: 48,
-    fontWeight: '700',
-    color: '#1F2937',
+    fontSize: 42,
+    fontWeight: '800',
+    color: '#FFD700',
     marginBottom: 8,
     letterSpacing: 2,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    textShadowColor: 'rgba(255, 215, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   tagline: {
-    fontSize: 18,
-    color: '#6B7280',
-    fontWeight: '500',
+    fontSize: 16,
+    color: '#E5E7EB',
+    fontWeight: '600',
     letterSpacing: 0.5,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    textAlign: 'center',
   },
   bottomSection: {
     position: 'absolute',
@@ -175,10 +181,13 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontSize: 16,
-    color: '#4B5563',
-    fontWeight: '400',
+    color: '#D1D5DB',
+    fontWeight: '500',
     textAlign: 'center',
     lineHeight: 24,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });

@@ -8,14 +8,14 @@ import Toast from 'react-native-toast-message';
 const getApiUrl = () => {
   if (__DEV__) {
     // Development - use your local IP address
-    const localIP = '192.168.1.24'; // Your actual IP address
+    const localIP = '192.168.1.2'; // Your actual IP address
     return Platform.select({
-      ios: `http://${localIP}:5000/api`,
-      android: `http://${localIP}:5000/api`,
-      default: `http://${localIP}:5000/api`,
+      ios: `http://${localIP}:3002/api`,
+      android: `http://${localIP}:3002/api`,
+      default: `http://${localIP}:3002/api`,
     });
   }
-  
+
   // Production - use your deployed backend URL
   return 'https://your-backend-url.up.railway.app/api';
 };
@@ -30,7 +30,7 @@ const TOKEN_EXPIRY_KEY = 'token_expiry';
 // Create axios instance with security defaults
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 30 seconds for image uploads
+  timeout: 60000, // 60 seconds for image uploads
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
