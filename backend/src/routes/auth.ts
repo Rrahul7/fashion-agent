@@ -8,6 +8,39 @@ import { asyncHandler } from '../middleware/errorHandler';
 
 const router = Router();
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     AuthRequest:
+ *       type: object
+ *       required:
+ *         - email
+ *         - password
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: User's email address
+ *         password:
+ *           type: string
+ *           minLength: 6
+ *           description: User's password (minimum 6 characters)
+ *     AuthResponse:
+ *       type: object
+ *       properties:
+ *         userId:
+ *           type: string
+ *           description: Unique user identifier
+ *         token:
+ *           type: string
+ *           description: JWT authentication token
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: User's email address
+ */
+
 // Validation middleware
 const registerValidation = [
   body('email').isEmail().normalizeEmail(),
@@ -20,6 +53,46 @@ const loginValidation = [
 ];
 
 // Register
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AuthRequest'
+ *           example:
+ *             email: "user@example.com"
+ *             password: "securePassword123"
+ *     responses:
+ *       201:
+ *         description: User successfully registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       400:
+ *         description: Validation error or user already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             examples:
+ *               validation_error:
+ *                 value:
+ *                   errors:
+ *                     - field: "email"
+ *                       message: "Invalid email format"
+ *                     - field: "password"
+ *                       message: "Password must be at least 6 characters"
+ *               user_exists:
+ *                 value:
+ *                   error: "User with this email already exists"
+ */
 router.post('/register', registerValidation, asyncHandler(async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -64,6 +137,43 @@ router.post('/register', registerValidation, asyncHandler(async (req: Request, r
 }));
 
 // Login
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Authenticate user and get access token
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AuthRequest'
+ *           example:
+ *             email: "user@example.com"
+ *             password: "securePassword123"
+ *     responses:
+ *       200:
+ *         description: Successfully authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: "Invalid email or password"
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post('/login', loginValidation, asyncHandler(async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

@@ -41,15 +41,16 @@ export async function guestTrackingMiddleware(req: GuestRequest, res: Response, 
         
         // Store device info for enhanced tracking
         try {
-          const deviceRecord = await prisma.guestSession.upsert({
-            where: { sessionId: deviceId },
+          const deviceRecord = await prisma.guestDevice.upsert({
+            where: { deviceId: deviceId },
             update: { 
               lastUsedAt: new Date(),
               ipAddress: req.ip,
               userAgent: req.get('User-Agent'),
             },
             create: {
-              sessionId: deviceId,
+              deviceId: deviceId,
+              deviceFingerprint: deviceFingerprint,
               reviewCount: 0,
               ipAddress: req.ip,
               userAgent: req.get('User-Agent'),
@@ -96,21 +97,22 @@ export async function guestTrackingMiddleware(req: GuestRequest, res: Response, 
         
         // Only create session record for legacy sessions (device sessions already handled above)
         try {
-          const guestSession = await prisma.guestSession.upsert({
-            where: { sessionId: guestSessionId },
+          const guestSession = await prisma.guestDevice.upsert({
+            where: { deviceId: guestSessionId },
             update: { 
               lastUsedAt: new Date(),
               ipAddress: req.ip,
               userAgent: req.get('User-Agent'),
             },
             create: {
-              sessionId: guestSessionId,
+              deviceId: guestSessionId,
+              deviceFingerprint: guestSessionId, // Use sessionId as fingerprint for legacy
               reviewCount: 0,
               ipAddress: req.ip,
               userAgent: req.get('User-Agent'),
             },
           });
-          console.log('✅ Legacy session saved:', { id: guestSession.sessionId, count: guestSession.reviewCount });
+          console.log('✅ Legacy session saved:', { id: guestSession.deviceId, count: guestSession.reviewCount });
         } catch (dbError) {
           console.error('❌ Database error creating legacy session:', dbError);
           throw dbError;
@@ -137,8 +139,8 @@ export async function checkGuestLimit(req: GuestRequest, res: Response, next: Ne
     }
     
     // Check current usage
-    const guestSession = await prisma.guestSession.findUnique({
-      where: { sessionId: req.guestSessionId },
+    const guestSession = await prisma.guestDevice.findUnique({
+      where: { deviceId: req.guestSessionId },
     });
     
     console.log('🔍 Found guest session in DB:', guestSession);
@@ -172,8 +174,8 @@ export async function checkGuestLimit(req: GuestRequest, res: Response, next: Ne
 }
 
 export async function incrementGuestUsage(guestSessionId: string) {
-  await prisma.guestSession.update({
-    where: { sessionId: guestSessionId },
+  await prisma.guestDevice.update({
+    where: { deviceId: guestSessionId },
     data: {
       reviewCount: { increment: 1 },
       lastUsedAt: new Date(),
@@ -182,8 +184,8 @@ export async function incrementGuestUsage(guestSessionId: string) {
 }
 
 export async function getGuestUsage(guestSessionId: string) {
-  const guestSession = await prisma.guestSession.findUnique({
-    where: { sessionId: guestSessionId },
+  const guestSession = await prisma.guestDevice.findUnique({
+    where: { deviceId: guestSessionId },
     select: {
       reviewCount: true,
     },

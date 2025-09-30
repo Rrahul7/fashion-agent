@@ -71,7 +71,7 @@ export async function guestDeviceTrackingMiddleware(
       }
 
       // Validate device ID format (prevent injection)
-      if (!/^device_[a-f0-9]{32}$/.test(deviceId)) {
+      if (!/^[a-zA-Z0-9\-_]{10,128}$/.test(deviceId)) {
         console.error('❌ Invalid device ID format:', deviceId);
         return res.status(400).json({
           error: 'Invalid device identifier',
@@ -101,7 +101,7 @@ export async function guestDeviceTrackingMiddleware(
             
             // Handle IP address tracking
             ipAddresses: {
-              set: await updateIpAddresses(deviceId, req.ip)
+              set: await updateIpAddresses(deviceId, req.ip || '')
             },
             
             // Reset daily counters if needed

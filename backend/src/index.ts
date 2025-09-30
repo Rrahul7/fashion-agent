@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import { config } from './config/config';
+import { initializeProduction, productionConfig, validateProductionConfig } from './config/production';
 import { authRoutes } from './routes/auth';
 import { profileRoutes } from './routes/profile';
 import { reviewRoutes } from './routes/reviews';
@@ -15,12 +16,18 @@ import {
   securityLogger, 
   sanitizeInput 
 } from './middleware/mobileSecurityMiddleware';
+import { swaggerSpec, swaggerUi, swaggerOptions } from './config/swagger';
 
 const app = express();
 
-// Security middleware with mobile support
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }, // Important for mobile
+// Initialize production configuration
+if (config.nodeEnv === 'production') {
+  initializeProduction();
+}
+
+// Security middleware with environment-specific settings
+const helmetConfig = config.nodeEnv === 'production' ? productionConfig.helmet : {
+  crossOriginResourcePolicy: { policy: "cross-origin" as const },
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
@@ -30,21 +37,23 @@ app.use(helmet({
       connectSrc: ["'self'", "https:", "wss:"],
     },
   },
-}));
+};
 
-// CORS configuration for web and mobile apps
-app.use(cors({
-  origin: function (origin, callback) {
+app.use(helmet(helmetConfig));
+
+// CORS configuration based on environment
+const corsConfig = config.nodeEnv === 'production' ? productionConfig.cors : {
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
     
     const allowedOrigins = [
-      process.env.FRONTEND_URL || 'http://localhost:3000', // Web app
-      'http://localhost:3000',           // Local web development
-      'capacitor://localhost',           // Capacitor iOS
-      'http://localhost',                // Capacitor Android
-      'ionic://localhost',               // Ionic
-      'file://',                         // Local file access
+      process.env.FRONTEND_URL || 'http://localhost:3000',
+      'http://localhost:3000',
+      'capacitor://localhost',
+      'http://localhost',
+      'ionic://localhost',
+      'file://',
     ];
     
     // Add local network access for development
@@ -66,50 +75,61 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
+    'Content-Type',
+    'Authorization',
     'X-Requested-With',
     'X-Timestamp',
     'X-Signature',
     'X-Platform',
-    'X-App-Version'
+    'X-App-Version',
+    'X-Device-ID',
+    'X-Device-Fingerprint'
   ],
   exposedHeaders: ['X-RateLimit-Remaining', 'X-RateLimit-Limit'],
-}));
+};
 
-// Enhanced rate limiting for different endpoints
-const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
-  message: {
-    error: 'Too many requests',
-    message: 'Please try again later',
-    retryAfter: 15 * 60, // 15 minutes in seconds
+app.use(cors(corsConfig));
+
+// Environment-specific rate limiting
+const rateLimitConfig = config.nodeEnv === 'production' ? productionConfig.rateLimits : {
+  general: {
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: {
+      error: 'Too many requests',
+      message: 'Please try again later',
+      retryAfter: 15 * 60,
+    },
   },
+  auth: {
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    message: {
+      error: 'Too many login attempts',
+      message: 'Please wait 15 minutes before trying again',
+      retryAfter: 15 * 60,
+    },
+    skipSuccessfulRequests: true,
+  },
+  upload: {
+    windowMs: 60 * 1000,
+    max: 10,
+    message: {
+      error: 'Upload limit exceeded',
+      message: 'Please wait a moment before uploading again',
+      retryAfter: 60,
+    },
+  },
+};
+
+const generalLimiter = rateLimit({
+  ...rateLimitConfig.general,
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 login attempts per window
-  message: {
-    error: 'Too many login attempts',
-    message: 'Please wait 15 minutes before trying again',
-    retryAfter: 15 * 60,
-  },
-  skipSuccessfulRequests: true, // Don't count successful requests
-});
-
-const uploadLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 10, // 10 uploads per minute
-  message: {
-    error: 'Upload limit exceeded',
-    message: 'Please wait a moment before uploading again',
-    retryAfter: 60,
-  },
-});
+const authLimiter = rateLimit(rateLimitConfig.auth);
+const uploadLimiter = rateLimit(rateLimitConfig.upload);
 
 // Apply rate limiters
 app.use('/api', generalLimiter);
@@ -128,8 +148,37 @@ app.use(mobileSecurityMiddleware);
 app.use(sanitizeInput);
 
 // Health check
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check endpoint
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: Service is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: OK
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ */
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// API Documentation
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerOptions));
+
+// API Schema endpoint
+app.get('/api/schema', (req, res) => {
+  res.json(swaggerSpec);
 });
 
 // API Routes

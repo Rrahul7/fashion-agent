@@ -100,7 +100,7 @@ router.post(
       const review = await prisma.review.create({
         data: {
           userId: null, // Guest review
-          guestSessionId: req.guestSessionId,
+          guestDeviceId: req.guestSessionId,
           imageUrl: uploadResult.secureUrl,
           imagePublicId: uploadResult.publicId,
           description,
@@ -191,7 +191,7 @@ router.post(
     const review = await prisma.review.findFirst({
       where: { 
         id: reviewId, 
-        guestSessionId: req.guestSessionId,
+        guestDeviceId: req.guestSessionId,
         isGuest: true,
       }
     });

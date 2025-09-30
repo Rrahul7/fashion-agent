@@ -10,6 +10,37 @@ const router = Router();
 router.use(authenticateToken);
 
 // Get user profile
+/**
+ * @swagger
+ * /api/profile:
+ *   get:
+ *     summary: Get user profile information
+ *     tags: [Profile]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 profile:
+ *                   $ref: '#/components/schemas/Profile'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/', asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId!;
 
@@ -40,6 +71,74 @@ const profileValidation = [
   body('otherMeasurements').optional().isObject(),
 ];
 
+/**
+ * @swagger
+ * /api/profile:
+ *   put:
+ *     summary: Update user profile information
+ *     tags: [Profile]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               skinTone:
+ *                 type: string
+ *                 description: User's skin tone
+ *                 example: "warm"
+ *               build:
+ *                 type: string
+ *                 description: User's body build
+ *                 example: "athletic"
+ *               faceStructure:
+ *                 type: string
+ *                 description: User's face structure
+ *                 example: "oval"
+ *               hairType:
+ *                 type: string
+ *                 description: User's hair type
+ *                 example: "curly"
+ *               height:
+ *                 type: number
+ *                 format: float
+ *                 description: User's height in cm
+ *                 example: 175.5
+ *               weight:
+ *                 type: number
+ *                 format: float
+ *                 description: User's weight in kg
+ *                 example: 70.2
+ *               otherMeasurements:
+ *                 type: object
+ *                 description: Additional body measurements
+ *                 example: {"chest": "95cm", "waist": "80cm", "hips": "100cm"}
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 profile:
+ *                   $ref: '#/components/schemas/Profile'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.put('/', profileValidation, asyncHandler(async (req: AuthRequest, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
