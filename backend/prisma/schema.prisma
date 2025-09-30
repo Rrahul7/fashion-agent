@@ -11,81 +11,70 @@ model User {
   id           String   @id @default(cuid())
   email        String   @unique
   passwordHash String
-  profile      Profile?
-  reviews      Review[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  profile      Profile?
+  reviews      Review[]
 
   @@map("users")
 }
 
 model Profile {
-  id                 String            @id @default(cuid())
-  userId             String            @unique
-  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  skinTone           String?
-  build              String?
-  faceStructure      String?
-  hairType           String?
-  height             Float?
-  weight             Float?
-  otherMeasurements  Json?
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  skinTone          String?
+  build             String?
+  faceStructure     String?
+  hairType          String?
+  height            Float?
+  weight            Float?
+  otherMeasurements Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("profiles")
 }
 
 model Review {
-  id                    String            @id @default(cuid())
-  userId                String?           // Optional for guest reviews
-  user                  User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  guestDeviceId         String?           // For guest users (device-based)
-  imageUrl              String
-  imagePublicId         String?           // Cloudinary public ID for image management
-  description           String?
-  
-  // Outfit Analysis with scores (0-100)
-  styleCategory         String?
-  styleCategoryScore    Int?
-  fit                   String?
-  fitScore              Int?
-  colorHarmony          String?
-  colorHarmonyScore     Int?
-  occasionSuitability   String?
-  occasionScore         Int?
-  
-  // Expert-level analysis fields
-  proportionBalance     String?
-  proportionScore       Int?
-  fabricSynergy         String?
-  fabricScore           Int?
-  stylingSophistication String?
-  sophisticationScore   Int?
-  
-  overallScore          Int?
-  highlights            String[]
+  id                     String   @id @default(cuid())
+  userId                 String?
+  imageUrl               String
+  imagePublicId          String?
+  description            String?
+  styleCategory          String?
+  fit                    String?
+  colorHarmony           String?
+  occasionSuitability    String?
+  highlights             String[]
   improvementSuggestions String[]
-  expertInsights        String[]
-  technicalFlaws        String[]
-  
-  // Enhanced feedback storage
-  userFeedback          String?           // User's detailed feedback
-  feedbackRating        Int?              // 1-5 star rating
-  accepted              Boolean?
-  
-  // Comparison data
-  comparedWithIds       String[]
-  comparisonInsight     String?
-  
-  // Guest tracking
-  isGuest               Boolean           @default(false)
-  createdAt             DateTime          @default(now())
+  comparedWithIds        String[]
+  comparisonInsight      String?
+  accepted               Boolean?
+  createdAt              DateTime @default(now())
+  colorHarmonyScore      Int?
+  feedbackRating         Int?
+  fitScore               Int?
+  guestDeviceId          String?           // For guest users (device-based)
+  isGuest                Boolean  @default(false)
+  occasionScore          Int?
+  overallScore           Int?
+  styleCategoryScore     Int?
+  userFeedback           String?
+  expertInsights         String[]
+  fabricScore            Int?
+  fabricSynergy          String?
+  proportionBalance      String?
+  proportionScore        Int?
+  sophisticationScore    Int?
+  stylingSophistication  String?
+  technicalFlaws         String[]
+  user                   User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("reviews")
   @@index([userId, createdAt])
   @@index([guestDeviceId, createdAt])
   @@index([isGuest, createdAt])
+  @@map("reviews")
 }
 
 // Track guest devices and their usage limits (much more secure than sessions)
