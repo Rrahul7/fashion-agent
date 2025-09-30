@@ -106,7 +106,7 @@ export async function guestTrackingMiddleware(req: GuestRequest, res: Response, 
             },
             create: {
               deviceId: guestSessionId,
-              deviceFingerprint: 'legacy-session',
+              deviceFingerprint: guestSessionId,
               reviewCount: 0,
               ipAddress: req.ip,
               userAgent: req.get('User-Agent'),
