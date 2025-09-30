@@ -1,8 +1,11 @@
-# Use Node.js 22 Alpine image
-FROM node:22-alpine
+# Use Node.js 22 slim image (Debian-based for better Prisma compatibility)
+FROM node:22-slim
 
-# Install OpenSSL for Prisma compatibility and curl for health check
-RUN apk add --no-cache openssl1.1-compat curl
+# Install necessary packages for Prisma
+RUN apt-get update && apt-get install -y \
+    openssl \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
