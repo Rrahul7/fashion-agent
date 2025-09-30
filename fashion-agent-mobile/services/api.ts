@@ -96,17 +96,31 @@ export const SecurityUtils = {
     }
   },
 
-  // Force clear all authentication and guest data
+  // Force clear all authentication data (device data is harder to clear)
   clearAllAuth: async () => {
     try {
       await SecureStore.deleteItemAsync('auth_token');
       await SecureStore.deleteItemAsync('refresh_token');
       await SecureStore.deleteItemAsync('token_expiry');
       await SecureStore.deleteItemAsync('user_data');
-      await SecureStore.deleteItemAsync('guest_session_id');
-      console.log('🧹 All authentication data cleared');
+      console.log('🧹 Authentication data cleared');
+      
+      // Note: Device data is NOT cleared here for security
+      // This prevents easy bypass of guest limits
+      console.log('📱 Device identification preserved for security');
     } catch (error) {
-      console.error('Error clearing all auth data:', error);
+      console.error('Error clearing auth data:', error);
+    }
+  },
+
+  // Separate method for clearing device data (testing only)
+  clearAllDataIncludingDevice: async () => {
+    try {
+      await SecurityUtils.clearAllAuth();
+      await DeviceUtils.clearDeviceData();
+      console.log('🧹⚠️  All data including device identification cleared (TESTING ONLY)');
+    } catch (error) {
+      console.error('Error clearing all data:', error);
     }
   },
 
@@ -122,40 +136,54 @@ export const SecurityUtils = {
   },
 };
 
-// Guest session management
-const GUEST_SESSION_KEY = 'guest_session_id';
+// Import device utilities for secure guest identification
+import DeviceUtils from './deviceUtils';
 
+// Guest device management - MUCH more secure than sessions
 const GuestUtils = {
-  // Get stored guest session ID
-  getGuestSessionId: async (): Promise<string | null> => {
+  // Get secure device ID (replaces session ID)
+  getGuestDeviceId: async (): Promise<string> => {
     try {
-      return await SecureStore.getItemAsync(GUEST_SESSION_KEY);
+      return await DeviceUtils.getSecureDeviceId();
     } catch (error) {
-      console.error('Error retrieving guest session:', error);
-      return null;
+      console.error('❌ Error getting device ID for guest mode:', error);
+      throw new Error('Device identification failed');
     }
   },
 
-  // Store guest session ID
-  setGuestSessionId: async (sessionId: string) => {
+  // Get complete device info for backend
+  getGuestDeviceInfo: async () => {
     try {
-      await SecureStore.setItemAsync(GUEST_SESSION_KEY, sessionId);
+      const deviceInfo = await DeviceUtils.getDeviceInfo();
+      console.log('📱 Device info for guest tracking:', {
+        deviceId: deviceInfo.deviceId,
+        platform: deviceInfo.platform,
+        fingerprint: deviceInfo.fingerprint.substring(0, 16) + '...'
+      });
+      return deviceInfo;
     } catch (error) {
-      console.error('Error storing guest session:', error);
+      console.error('❌ Error getting device info:', error);
+      throw error;
     }
   },
 
-  // Generate new guest session ID
-  generateGuestSessionId: (): string => {
-    return 'guest_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+  // Validate device consistency (anti-spoofing)
+  validateDevice: async (): Promise<boolean> => {
+    try {
+      return await DeviceUtils.validateDeviceConsistency();
+    } catch (error) {
+      console.error('❌ Device validation failed:', error);
+      return false;
+    }
   },
 
-  // Clear guest session
-  clearGuestSession: async () => {
+  // Clear device data (for testing only - much harder to abuse)
+  clearGuestDeviceData: async () => {
     try {
-      await SecureStore.deleteItemAsync(GUEST_SESSION_KEY);
+      await DeviceUtils.clearDeviceData();
+      console.log('🧹 Guest device data cleared (testing mode)');
     } catch (error) {
-      console.error('Error clearing guest session:', error);
+      console.error('❌ Error clearing guest device data:', error);
     }
   },
 };
@@ -169,14 +197,35 @@ api.interceptors.request.use(
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       } else {
-        // For guest users, add guest session ID
-        let guestSessionId = await GuestUtils.getGuestSessionId();
-        if (!guestSessionId) {
-          guestSessionId = GuestUtils.generateGuestSessionId();
-          await GuestUtils.setGuestSessionId(guestSessionId);
+        // For guest users, use secure device ID
+        try {
+          const deviceInfo = await GuestUtils.getGuestDeviceInfo();
+          
+          // Primary device identification
+          config.headers['X-Device-ID'] = deviceInfo.deviceId;
+          config.headers['X-Device-Fingerprint'] = deviceInfo.fingerprint;
+          
+          // Additional device context for security
+          config.headers['X-Device-Platform'] = deviceInfo.platform;
+          config.headers['X-Device-Name'] = deviceInfo.deviceName || 'Unknown';
+          config.headers['X-App-Version'] = deviceInfo.appVersion;
+          
+          console.log('🔐 Adding secure device headers:', {
+            deviceId: deviceInfo.deviceId,
+            platform: deviceInfo.platform,
+            fingerprint: deviceInfo.fingerprint.substring(0, 16) + '...'
+          });
+
+          // Validate device consistency
+          const isValidDevice = await GuestUtils.validateDevice();
+          if (!isValidDevice) {
+            console.warn('⚠️ Device consistency validation failed - potential spoofing');
+            config.headers['X-Device-Warning'] = 'inconsistent';
+          }
+        } catch (error) {
+          console.error('❌ Failed to get device info for guest request:', error);
+          throw new Error('Device identification required for guest access');
         }
-        config.headers['Guest-Session'] = guestSessionId;
-        console.log('🔐 Adding Guest-Session header:', guestSessionId);
       }
 
       // Add security headers for sensitive operations

@@ -21,58 +21,100 @@ export async function guestTrackingMiddleware(req: GuestRequest, res: Response, 
     const hasToken = authHeader && authHeader.startsWith('Bearer ');
     
     console.log('🔍 Guest tracking - Auth header:', hasToken ? 'Present' : 'None');
-    console.log('🔍 Guest tracking - Headers:', {
-      'guest-session': req.headers['guest-session'],
-      'Guest-Session': req.headers['Guest-Session'], 
-      'x-guest-session': req.headers['x-guest-session'],
-      'cookie': req.headers.cookie
-    });
     
     if (!hasToken) {
       // This is a guest user
       req.isGuest = true;
       
-      // Get or create guest session (check multiple header variations)
-      let guestSessionId = req.cookies['guest-session'] || 
-                          req.headers['guest-session'] as string || 
-                          req.headers['Guest-Session'] as string || 
-                          req.headers['x-guest-session'] as string;
+      // NEW: Check for device-based headers first (more secure)
+      const deviceId = req.headers['x-device-id'] as string;
+      const deviceFingerprint = req.headers['x-device-fingerprint'] as string;
       
-      console.log('🔍 Found guest session ID:', guestSessionId);
-      
-      if (!guestSessionId) {
-        guestSessionId = uuidv4();
-        console.log('🆕 Generated new guest session ID:', guestSessionId);
-        res.cookie('guest-session', guestSessionId, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      if (deviceId && deviceFingerprint) {
+        console.log('📱 Using device-based tracking:', {
+          deviceId: deviceId.substring(0, 20) + '...',
+          fingerprint: deviceFingerprint.substring(0, 16) + '...'
         });
-      }
-      
-      req.guestSessionId = guestSessionId;
-      
-      // Ensure guest session exists in database
-      try {
-        const guestSession = await prisma.guestSession.upsert({
-          where: { sessionId: guestSessionId },
-          update: { 
-            lastUsedAt: new Date(),
-            ipAddress: req.ip,
-            userAgent: req.get('User-Agent'),
-          },
-          create: {
-            sessionId: guestSessionId,
-            reviewCount: 0,
-            ipAddress: req.ip,
-            userAgent: req.get('User-Agent'),
-          },
+        
+        // Use device ID as session ID for backward compatibility
+        req.guestSessionId = deviceId;
+        
+        // Store device info for enhanced tracking
+        try {
+          const deviceRecord = await prisma.guestSession.upsert({
+            where: { sessionId: deviceId },
+            update: { 
+              lastUsedAt: new Date(),
+              ipAddress: req.ip,
+              userAgent: req.get('User-Agent'),
+            },
+            create: {
+              sessionId: deviceId,
+              reviewCount: 0,
+              ipAddress: req.ip,
+              userAgent: req.get('User-Agent'),
+            },
+          });
+          console.log('✅ Device-based session updated:', { 
+            deviceId: deviceId.substring(0, 20) + '...', 
+            count: deviceRecord.reviewCount 
+          });
+        } catch (dbError) {
+          console.error('❌ Database error with device session:', dbError);
+        }
+        
+      } else {
+        // FALLBACK: Legacy session-based approach
+        console.log('🔍 Falling back to session-based tracking');
+        console.log('🔍 Guest tracking - Headers:', {
+          'guest-session': req.headers['guest-session'],
+          'Guest-Session': req.headers['Guest-Session'], 
+          'x-guest-session': req.headers['x-guest-session'],
+          'cookie': req.headers.cookie
         });
-        console.log('✅ Guest session saved:', { id: guestSession.sessionId, count: guestSession.reviewCount });
-      } catch (dbError) {
-        console.error('❌ Database error creating guest session:', dbError);
-        throw dbError;
+        
+        // Get or create guest session (check multiple header variations)
+        let guestSessionId = req.cookies['guest-session'] || 
+                            req.headers['guest-session'] as string || 
+                            req.headers['Guest-Session'] as string || 
+                            req.headers['x-guest-session'] as string;
+        
+        console.log('🔍 Found legacy session ID:', guestSessionId);
+        
+        if (!guestSessionId) {
+          guestSessionId = uuidv4();
+          console.log('🆕 Generated new legacy session ID:', guestSessionId);
+          res.cookie('guest-session', guestSessionId, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+          });
+        }
+        
+        req.guestSessionId = guestSessionId;
+        
+        // Only create session record for legacy sessions (device sessions already handled above)
+        try {
+          const guestSession = await prisma.guestSession.upsert({
+            where: { sessionId: guestSessionId },
+            update: { 
+              lastUsedAt: new Date(),
+              ipAddress: req.ip,
+              userAgent: req.get('User-Agent'),
+            },
+            create: {
+              sessionId: guestSessionId,
+              reviewCount: 0,
+              ipAddress: req.ip,
+              userAgent: req.get('User-Agent'),
+            },
+          });
+          console.log('✅ Legacy session saved:', { id: guestSession.sessionId, count: guestSession.reviewCount });
+        } catch (dbError) {
+          console.error('❌ Database error creating legacy session:', dbError);
+          throw dbError;
+        }
       }
     } else {
       req.isGuest = false;

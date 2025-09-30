@@ -40,7 +40,7 @@ model Review {
   id                    String            @id @default(cuid())
   userId                String?           // Optional for guest reviews
   user                  User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  guestSessionId        String?           // For guest users
+  guestDeviceId         String?           // For guest users (device-based)
   imageUrl              String
   imagePublicId         String?           // Cloudinary public ID for image management
   description           String?
@@ -84,20 +84,52 @@ model Review {
 
   @@map("reviews")
   @@index([userId, createdAt])
-  @@index([guestSessionId, createdAt])
+  @@index([guestDeviceId, createdAt])
+  @@index([isGuest, createdAt])
 }
 
-// Track guest sessions and their usage limits
-model GuestSession {
-  id              String            @id @default(cuid())
-  sessionId       String            @unique
-  reviewCount     Int               @default(0)
-  ipAddress       String?
-  userAgent       String?
-  lastUsedAt      DateTime          @default(now())
-  createdAt       DateTime          @default(now())
+// Track guest devices and their usage limits (much more secure than sessions)
+model GuestDevice {
+  id                    String            @id @default(cuid())
+  deviceId              String            @unique    // Secure device identifier
+  deviceFingerprint     String            // Device characteristics hash
+  reviewCount           Int               @default(0)
+  
+  // Device metadata for security and analytics
+  platform              String?           // iOS/Android
+  deviceName            String?           // User-set device name
+  appVersion            String?           // App version
+  osVersion             String?           // OS version
+  
+  // Network and security tracking
+  ipAddress             String?           // Current IP
+  ipAddresses           String[]          // Historical IPs for pattern detection
+  userAgent             String?           // User agent string
+  
+  // Security flags
+  isBlocked             Boolean           @default(false)
+  riskScore             Int               @default(0)    // 0-100 risk assessment
+  inconsistencyCount    Int               @default(0)    // Track device spoofing attempts
+  
+  // Usage tracking
+  lastUsedAt            DateTime          @default(now())
+  firstSeenAt           DateTime          @default(now())
+  totalRequests         Int               @default(0)
+  
+  // Abuse detection
+  rapidRequestCount     Int               @default(0)    // Requests in last minute
+  dailyRequestCount     Int               @default(0)    // Requests today
+  lastDailyReset        DateTime          @default(now())
+  
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
 
-  @@map("guest_sessions")
-  @@index([sessionId])
+  @@map("guest_devices")
+  @@index([deviceId])
+  @@index([deviceFingerprint])
   @@index([createdAt])
+  @@index([lastUsedAt])
+  @@index([isBlocked])
+  @@index([riskScore])
+  @@index([ipAddress, createdAt])
 }

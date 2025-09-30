@@ -50,7 +50,7 @@ export default function LoginScreen() {
 
   const navigateToRegister = () => {
     clearAuthError();
-    router.push('/auth/register');
+    router.push('./register' as any); // Type workaround for dynamic routes
   };
 
   return (
