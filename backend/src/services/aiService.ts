@@ -263,15 +263,16 @@ function createOutfitAnalysisPrompt(userProfile?: UserProfile | null, descriptio
 
 ${profileContext}${descriptionContext}
 
-## FIRST: OUTFIT VALIDATION
+## OUTFIT VALIDATION
 
-**CRITICAL STEP**: Before analyzing, you MUST verify there is an actual outfit to review:
-- Is the person wearing substantial clothing/garments (not just underwear, swimwear, or shirtless)?
-- Are there enough clothing elements to constitute a complete outfit?
-- Is this appropriate for fashion analysis?
+**Only return "no outfit" if the image shows:**
+- A completely shirtless/naked person with no clothing at all
+- Only undergarments (bra, underwear) as the primary clothing
+- No clothing visible whatsoever
 
-**IF NO SUBSTANTIAL OUTFIT IS PRESENT:**
-Return this JSON immediately (no further analysis needed):
+**For ALL other cases with ANY visible clothing items** (shirts, pants, dresses, jackets, activewear, casual wear, formal wear, etc.), proceed with the full analysis.
+
+**ONLY if absolutely no clothing is present**, return:
 {
   "styleCategory": "no outfit",
   "styleCategoryScore": 0,
@@ -289,12 +290,12 @@ Return this JSON immediately (no further analysis needed):
   "sophisticationScore": 0,
   "overallScore": 0,
   "highlights": [],
-  "improvementSuggestions": ["Please upload an image with clothing/outfit to analyze", "Ensure the person is wearing substantial garments for fashion review"],
-  "expertInsights": ["Fashion analysis requires actual clothing elements to evaluate"],
-  "technicalFlaws": ["No clothing present to analyze"]
+  "improvementSuggestions": ["Please upload an image with clothing to analyze"],
+  "expertInsights": ["No clothing visible for fashion analysis"],
+  "technicalFlaws": ["No outfit present"]
 }
 
-**ONLY IF A COMPLETE OUTFIT IS PRESENT**, proceed with the expert analysis framework below:
+**Otherwise, analyze the outfit that is present:**
 
 ## EXPERT ANALYSIS FRAMEWORK
 

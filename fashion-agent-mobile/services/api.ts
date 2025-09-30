@@ -6,18 +6,18 @@ import Toast from 'react-native-toast-message';
 
 // Environment-based API URL configuration
 const getApiUrl = () => {
-  if (__DEV__) {
-    // Development - use your local IP address
-    const localIP = '192.168.1.2'; // Your actual IP address
-    return Platform.select({
-      ios: `http://${localIP}:3002/api`,
-      android: `http://${localIP}:3002/api`,
-      default: `http://${localIP}:3002/api`,
-    });
-  }
+  // if (__DEV__) {
+  //   // Development - use your local IP address
+  //   const localIP = '192.168.1.2'; // Your actual IP address
+  //   return Platform.select({
+  //     ios: `http://${localIP}:3002/api`,
+  //     android: `http://${localIP}:3002/api`,
+  //     default: `http://${localIP}:3002/api`,
+  //   });
+  // }
 
   // Production - use your deployed backend URL
-  return 'https://your-backend-url.up.railway.app/api';
+  return 'https://drippp.up.railway.app/api';
 };
 
 const API_BASE_URL = getApiUrl();
