@@ -19,7 +19,7 @@ export interface AuthRequest extends GuestDeviceRequest {
 }
 
 // Security configuration
-const GUEST_REVIEW_LIMIT = 3;
+const GUEST_REVIEW_LIMIT = 5;
 const DAILY_REQUEST_LIMIT = 50; // Max requests per device per day
 const RAPID_REQUEST_LIMIT = 10; // Max requests per minute
 const HIGH_RISK_THRESHOLD = 75; // Block devices above this risk score
@@ -247,7 +247,7 @@ export async function checkDeviceLimit(
         code: 'LIMIT_REACHED',
         limit: GUEST_REVIEW_LIMIT,
         used: deviceRecord.reviewCount,
-        message: 'You\'ve used all 3 free reviews. Create an account for unlimited access!'
+        message: 'You\'ve used all 5 free reviews. Create an account for unlimited access!'
       });
     }
     

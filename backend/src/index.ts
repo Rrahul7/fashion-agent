@@ -8,7 +8,6 @@ import { initializeProduction, productionConfig, validateProductionConfig } from
 import { authRoutes } from './routes/auth';
 import { profileRoutes } from './routes/profile';
 import { reviewRoutes } from './routes/reviews';
-import { guestReviewRoutes } from './routes/guestReviews';
 import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { 
@@ -184,8 +183,7 @@ app.get('/api/schema', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
-app.use('/api/reviews', reviewRoutes);
-app.use('/api/guest/reviews', guestReviewRoutes);
+app.use('/api/reviews', reviewRoutes); // Now supports both authenticated users and guests
 
 // Error handling middleware (must be last)
 app.use(notFoundHandler);

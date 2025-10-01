@@ -12,7 +12,7 @@ export interface AuthRequest extends GuestRequest {
   userId?: string;
 }
 
-const GUEST_REVIEW_LIMIT = 3;
+const GUEST_REVIEW_LIMIT = 5;
 
 export async function guestTrackingMiddleware(req: GuestRequest, res: Response, next: NextFunction) {
   try {
@@ -161,7 +161,7 @@ export async function checkGuestLimit(req: GuestRequest, res: Response, next: Ne
         code: 'LIMIT_REACHED',
         limit: GUEST_REVIEW_LIMIT,
         used: guestSession.reviewCount,
-        message: 'You\'ve used all 3 free reviews. Create an account for unlimited access!'
+        message: 'You\'ve used all 5 free reviews. Create an account for unlimited access!'
       });
     }
     

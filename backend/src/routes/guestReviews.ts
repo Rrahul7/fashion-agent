@@ -55,7 +55,7 @@ router.get('/usage', asyncHandler(async (req: GuestRequest, res: Response) => {
   console.log('📊 Usage check - isGuest:', req.isGuest, 'sessionId:', req.guestSessionId);
   
   if (!req.isGuest || !req.guestSessionId) {
-    return res.json({ used: 0, limit: 3, remaining: 3 });
+    return res.json({ used: 0, limit: 5, remaining: 5 });
   }
   
   const usage = await getGuestUsage(req.guestSessionId);

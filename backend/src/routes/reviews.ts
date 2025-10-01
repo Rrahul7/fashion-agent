@@ -3,7 +3,7 @@ import multer from 'multer';
 import { body, validationResult } from 'express-validator';
 import { prisma } from '../lib/prisma';
 import { uploadImage, deleteImage } from '../lib/cloudinary';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { unifiedAuthMiddleware, checkReviewLimits, incrementReviewUsage, getUsageInfo, UnifiedUnifiedAuthRequest } from '../middleware/unifiedAuth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { analyzeOutfit } from '../services/aiService';
 
@@ -24,15 +24,16 @@ const upload = multer({
   },
 });
 
-// All review routes require authentication
-router.use(authenticateToken);
+// All review routes use unified authentication (supports both JWT and guest)
+router.use(unifiedAuthMiddleware);
 
 // Create new review (upload outfit image)
 router.post(
   '/',
+  checkReviewLimits, // Check limits before processing
   upload.single('image'),
   [body('description').optional().isString().trim()],
-  asyncHandler(async (req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: UnifiedUnifiedAuthRequest, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -42,33 +43,47 @@ router.post(
       return res.status(400).json({ error: 'Image file is required' });
     }
 
-    const userId = req.userId!;
     const { description } = req.body;
 
     try {
+      // Generate appropriate image identifier
+      const imageId = req.isAuthenticated 
+        ? `${req.userId}_${Date.now()}`
+        : `guest_${req.guestSessionId}_${Date.now()}`;
+      
+      const folderPath = req.isAuthenticated 
+        ? `reviews/${req.userId}`
+        : `reviews/guest/${req.guestSessionId}`;
+
       // Upload image to Cloudinary
       const uploadResult = await uploadImage(
         req.file.buffer,
-        `${userId}_${Date.now()}`,
-        `reviews/${userId}`
+        imageId,
+        folderPath
       );
 
-      // Get user profile for context
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        include: { profile: true }
-      });
+      // Get user profile for context (authenticated users only)
+      let userProfile = null;
+      if (req.isAuthenticated && req.userId) {
+        const user = await prisma.user.findUnique({
+          where: { id: req.userId },
+          include: { profile: true }
+        });
+        userProfile = user?.profile;
+      }
 
       // Analyze outfit with AI
-      const analysis = await analyzeOutfit(uploadResult.secureUrl, user?.profile, description);
+      const analysis = await analyzeOutfit(uploadResult.secureUrl, userProfile, description);
 
       // Create review record
       const review = await prisma.review.create({
         data: {
-          userId,
+          userId: req.isAuthenticated ? req.userId! : null,
+          guestDeviceId: req.isGuest ? req.guestSessionId! : null,
           imageUrl: uploadResult.secureUrl,
           imagePublicId: uploadResult.publicId,
           description,
+          isGuest: req.isGuest || false,
           styleCategory: analysis.styleCategory,
           styleCategoryScore: analysis.styleCategoryScore,
           fit: analysis.fit,
@@ -91,38 +106,47 @@ router.post(
         }
       });
 
-      // Cleanup old reviews (keep only last 5)
-      const userReviewsCount = await prisma.review.count({
-        where: { userId }
-      });
-
-      if (userReviewsCount > 5) {
-        const oldReviews = await prisma.review.findMany({
-          where: { userId },
-          orderBy: { createdAt: 'asc' },
-          take: userReviewsCount - 5,
+      // Handle cleanup and usage tracking
+      if (req.isAuthenticated) {
+        // Cleanup old reviews for authenticated users (keep only last 10)
+        const userReviewsCount = await prisma.review.count({
+          where: { userId: req.userId }
         });
 
-        // Delete old images from Cloudinary
-        for (const oldReview of oldReviews) {
-          if (oldReview.imagePublicId) {
-            try {
-              await deleteImage(oldReview.imagePublicId);
-            } catch (error) {
-              console.error('Failed to delete old image:', error);
+        if (userReviewsCount > 10) {
+          const oldReviews = await prisma.review.findMany({
+            where: { userId: req.userId },
+            orderBy: { createdAt: 'asc' },
+            take: userReviewsCount - 10,
+          });
+
+          // Delete old images from Cloudinary
+          for (const oldReview of oldReviews) {
+            if (oldReview.imagePublicId) {
+              try {
+                await deleteImage(oldReview.imagePublicId);
+              } catch (error) {
+                console.error('Failed to delete old image:', error);
+              }
             }
           }
-        }
 
-        // Delete old review records
-        await prisma.review.deleteMany({
-          where: {
-            id: { in: oldReviews.map((r: any) => r.id) }
-          }
-        });
+          // Delete old review records
+          await prisma.review.deleteMany({
+            where: {
+              id: { in: oldReviews.map((r: any) => r.id) }
+            }
+          });
+        }
+      } else {
+        // Increment guest usage
+        await incrementReviewUsage(req);
       }
 
-      res.status(201).json({
+      // Get usage information for response
+      const usage = await getUsageInfo(req);
+
+      const response: any = {
         reviewId: review.id,
         outfitAnalysis: {
           styleCategory: review.styleCategory,
@@ -145,7 +169,14 @@ router.post(
           expertInsights: review.expertInsights,
           technicalFlaws: review.technicalFlaws,
         }
-      });
+      };
+
+      // Add usage info for guests
+      if (req.isGuest) {
+        response.guestUsage = usage;
+      }
+
+      res.status(201).json(response);
 
     } catch (error) {
       console.error('Review creation error:', error);
@@ -154,66 +185,130 @@ router.post(
   })
 );
 
-// Get user reviews (last 5)
-router.get('/', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const userId = req.userId!;
-
-  const reviews = await prisma.review.findMany({
-    where: { userId },
-    orderBy: { createdAt: 'desc' },
-    take: 5,
-    select: {
-      id: true,
-      imageUrl: true,
-      description: true,
-      styleCategory: true,
-      styleCategoryScore: true,
-      fit: true,
-      fitScore: true,
-      colorHarmony: true,
-      colorHarmonyScore: true,
-      occasionSuitability: true,
-      occasionScore: true,
-      proportionBalance: true,
-      proportionScore: true,
-      fabricSynergy: true,
-      fabricScore: true,
-      stylingSophistication: true,
-      sophisticationScore: true,
-      overallScore: true,
-      highlights: true,
-      improvementSuggestions: true,
-      expertInsights: true,
-      technicalFlaws: true,
-      comparisonInsight: true,
-      accepted: true,
-      createdAt: true,
+// Get user reviews (supports both authenticated users and guests)
+router.get('/', asyncHandler(async (req: UnifiedUnifiedAuthRequest, res: Response) => {
+  try {
+    let reviews;
+    
+    if (req.isAuthenticated && req.userId) {
+      // Get authenticated user's reviews (last 10)
+      reviews = await prisma.review.findMany({
+        where: { userId: req.userId },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: {
+          id: true,
+          imageUrl: true,
+          description: true,
+          styleCategory: true,
+          styleCategoryScore: true,
+          fit: true,
+          fitScore: true,
+          colorHarmony: true,
+          colorHarmonyScore: true,
+          occasionSuitability: true,
+          occasionScore: true,
+          proportionBalance: true,
+          proportionScore: true,
+          fabricSynergy: true,
+          fabricScore: true,
+          stylingSophistication: true,
+          sophisticationScore: true,
+          overallScore: true,
+          highlights: true,
+          improvementSuggestions: true,
+          expertInsights: true,
+          technicalFlaws: true,
+          comparisonInsight: true,
+          accepted: true,
+          createdAt: true,
+        }
+      });
+    } else if (req.isGuest && req.guestSessionId) {
+      // Get guest's reviews (up to 5, the limit)
+      reviews = await prisma.review.findMany({
+        where: { 
+          guestDeviceId: req.guestSessionId,
+          isGuest: true 
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5, // Match guest review limit
+        select: {
+          id: true,
+          imageUrl: true,
+          description: true,
+          styleCategory: true,
+          styleCategoryScore: true,
+          fit: true,
+          fitScore: true,
+          colorHarmony: true,
+          colorHarmonyScore: true,
+          occasionSuitability: true,
+          occasionScore: true,
+          proportionBalance: true,
+          proportionScore: true,
+          fabricSynergy: true,
+          fabricScore: true,
+          stylingSophistication: true,
+          sophisticationScore: true,
+          overallScore: true,
+          highlights: true,
+          improvementSuggestions: true,
+          expertInsights: true,
+          technicalFlaws: true,
+          accepted: true,
+          createdAt: true,
+        }
+      });
+    } else {
+      return res.status(400).json({ 
+        error: 'Invalid authentication',
+        code: 'INVALID_AUTH'
+      });
     }
-  });
 
-  res.json(reviews);
+    // Add usage information for guests
+    if (req.isGuest) {
+      const usage = await getUsageInfo(req);
+      res.json({
+        reviews,
+        usage
+      });
+    } else {
+      res.json(reviews);
+    }
+
+  } catch (error) {
+    console.error('Error fetching reviews:', error);
+    res.status(500).json({ error: 'Failed to fetch reviews' });
+  }
 }));
 
 // Compare reviews
 router.post(
   '/:reviewId/compare',
   [body('previousReviewIds').isArray().withMessage('previousReviewIds must be an array')],
-  asyncHandler(async (req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: UnifiedAuthRequest, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const userId = req.userId!;
+    const userId = req.userId;
     const { reviewId } = req.params;
     const { previousReviewIds } = req.body;
 
-    // Verify all reviews belong to the user
+    // Build query based on user type
+    const whereClause = req.isAuthenticated 
+      ? { userId } 
+      : { guestDeviceId: req.guestSessionId, isGuest: true };
+
+    // Verify all reviews belong to the user/guest
     const allReviewIds = [reviewId, ...previousReviewIds];
     const reviews = await prisma.review.findMany({
       where: {
         id: { in: allReviewIds },
-        userId,
+        ...whereClause,
       }
     });
 
@@ -259,18 +354,23 @@ router.post(
 router.post(
   '/:reviewId/accept',
   [body('accepted').isBoolean().withMessage('accepted must be true or false')],
-  asyncHandler(async (req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: UnifiedAuthRequest, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const userId = req.userId!;
+    const userId = req.userId;
     const { reviewId } = req.params;
     const { accepted } = req.body;
 
+    // Build query based on user type
+    const whereClause = req.isAuthenticated 
+      ? { id: reviewId, userId } 
+      : { id: reviewId, guestDeviceId: req.guestSessionId, isGuest: true };
+
     const review = await prisma.review.findFirst({
-      where: { id: reviewId, userId }
+      where: whereClause
     });
 
     if (!review) {

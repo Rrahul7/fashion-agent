@@ -50,7 +50,7 @@
  *       500:
  *         description: Internal server error
  *   get:
- *     summary: Get user's recent outfit reviews (last 5)
+ *     summary: Get user's recent outfit reviews (last 10)
  *     tags: [Reviews]
  *     security:
  *       - BearerAuth: []
