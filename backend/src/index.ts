@@ -19,6 +19,13 @@ import { swaggerSpec, swaggerUi, swaggerOptions } from './config/swagger';
 
 const app = express();
 
+// Trust proxy settings for production deployment
+if (config.nodeEnv === 'production') {
+  app.set('trust proxy', 1); // Trust first proxy (Railway, Heroku, etc.)
+} else {
+  app.set('trust proxy', true); // For development with local proxies
+}
+
 // Initialize production configuration
 if (config.nodeEnv === 'production') {
   initializeProduction();
@@ -125,10 +132,36 @@ const generalLimiter = rateLimit({
   ...rateLimitConfig.general,
   standardHeaders: true,
   legacyHeaders: false,
+  // Use proper IP identification based on trust proxy setting
+  keyGenerator: (req) => {
+    // In production with trust proxy, use the forwarded IP
+    if (config.nodeEnv === 'production') {
+      return req.ip || req.connection.remoteAddress || 'unknown';
+    }
+    // In development, use the direct connection IP
+    return req.connection.remoteAddress || req.ip || 'unknown';
+  },
 });
 
-const authLimiter = rateLimit(rateLimitConfig.auth);
-const uploadLimiter = rateLimit(rateLimitConfig.upload);
+const authLimiter = rateLimit({
+  ...rateLimitConfig.auth,
+  keyGenerator: (req) => {
+    if (config.nodeEnv === 'production') {
+      return req.ip || req.connection.remoteAddress || 'unknown';
+    }
+    return req.connection.remoteAddress || req.ip || 'unknown';
+  },
+});
+
+const uploadLimiter = rateLimit({
+  ...rateLimitConfig.upload,
+  keyGenerator: (req) => {
+    if (config.nodeEnv === 'production') {
+      return req.ip || req.connection.remoteAddress || 'unknown';
+    }
+    return req.connection.remoteAddress || req.ip || 'unknown';
+  },
+});
 
 // Apply rate limiters
 app.use('/api', generalLimiter);
