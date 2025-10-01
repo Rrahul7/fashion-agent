@@ -38,7 +38,7 @@ const options: swaggerJSDoc.Options = {
           type: 'apiKey',
           in: 'header',
           name: 'x-device-id',
-          description: 'Device identification for guest users',
+          description: 'Device identification for guest users (requires x-device-fingerprint header)',
         },
       },
       schemas: {
@@ -165,9 +165,9 @@ const options: swaggerJSDoc.Options = {
         GuestUsage: {
           type: 'object',
           properties: {
-            used: { type: 'integer', minimum: 0 },
-            limit: { type: 'integer', minimum: 0 },
-            remaining: { type: 'integer', minimum: 0 },
+            used: { type: 'integer', minimum: 0, description: 'Number of reviews used' },
+            limit: { type: 'integer', minimum: 0, default: 5, description: 'Maximum reviews allowed (5 for guests)' },
+            remaining: { type: 'integer', minimum: 0, description: 'Reviews remaining' },
           },
         },
       },
@@ -183,11 +183,7 @@ const options: swaggerJSDoc.Options = {
       },
       {
         name: 'Reviews',
-        description: 'Outfit review and analysis endpoints (authenticated)',
-      },
-      {
-        name: 'Guest Reviews',
-        description: 'Outfit review endpoints for guest users',
+        description: 'Unified outfit review and analysis endpoints (supports both authenticated users and guests)',
       },
       {
         name: 'System',
