@@ -22,7 +22,7 @@ const options: swaggerJSDoc.Options = {
     servers: [
       {
         url: config.nodeEnv === 'production' 
-          ? 'https://fashion-agent-backend.railway.app'
+          ? 'https://drippp.up.railway.app'
           : `http://localhost:${config.port}`,
         description: config.nodeEnv === 'production' ? 'Production server' : 'Development server',
       },
