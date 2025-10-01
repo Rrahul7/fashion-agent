@@ -140,15 +140,27 @@ export const securityLogger = (req: MobileRequest, res: Response, next: NextFunc
       console.log('🔒 Security Log [MOBILE]:', JSON.stringify(logData));
     }
 
-    // Log suspicious activity
+    // Log suspicious activity with context
     if (res.statusCode === 401 || res.statusCode === 403) {
-      console.warn('🚨 Potential security issue:', JSON.stringify({
+      // Auth routes (login/register) shouldn't have authorization headers
+      const isAuthRoute = req.path.includes('/api/auth/login') || req.path.includes('/api/auth/register');
+      
+      const suspiciousHeaders: any = {
+        origin: req.headers.origin,
+        referer: req.headers.referer,
+      };
+      
+      // Only check for missing auth header on protected routes, not auth routes
+      if (!isAuthRoute) {
+        suspiciousHeaders.authorization = req.headers.authorization ? '[PRESENT]' : '[MISSING]';
+      }
+      
+      const securityContext = isAuthRoute ? 'AUTH_FAILURE' : 'ACCESS_DENIED';
+      
+      console.warn(`🚨 Security Alert [${securityContext}]:`, JSON.stringify({
         ...logData,
-        headers: {
-          authorization: req.headers.authorization ? '[PRESENT]' : '[MISSING]',
-          origin: req.headers.origin,
-          referer: req.headers.referer,
-        },
+        context: isAuthRoute ? 'Login/Register attempt failed' : 'Protected resource access denied',
+        headers: suspiciousHeaders,
       }));
     }
   });
