@@ -3,7 +3,7 @@ import multer from 'multer';
 import { body, validationResult } from 'express-validator';
 import { prisma } from '../lib/prisma';
 import { uploadImage, deleteImage } from '../lib/cloudinary';
-import { unifiedAuthMiddleware, checkReviewLimits, incrementReviewUsage, getUsageInfo, UnifiedUnifiedAuthRequest } from '../middleware/unifiedAuth';
+import { unifiedAuthMiddleware, checkReviewLimits, incrementReviewUsage, getUsageInfo, UnifiedAuthRequest } from '../middleware/unifiedAuth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { analyzeOutfit } from '../services/aiService';
 
@@ -33,7 +33,7 @@ router.post(
   checkReviewLimits, // Check limits before processing
   upload.single('image'),
   [body('description').optional().isString().trim()],
-  asyncHandler(async (req: UnifiedUnifiedAuthRequest, res: Response) => {
+  asyncHandler(async (req: UnifiedAuthRequest, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -186,7 +186,7 @@ router.post(
 );
 
 // Get user reviews (supports both authenticated users and guests)
-router.get('/', asyncHandler(async (req: UnifiedUnifiedAuthRequest, res: Response) => {
+router.get('/', asyncHandler(async (req: UnifiedAuthRequest, res: Response) => {
   try {
     let reviews;
     
